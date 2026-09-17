@@ -122,6 +122,49 @@ def test_congestion_sheds_telemetry_before_scada(solved):
     assert {m.agent for m in result.moves} == {"ER_03/telemetry", "ER_04/telemetry"}
 
 
+def test_a_misconfigured_route_makes_every_path_across_it_unusable(topology, monkeypatch):
+    """
+    The eco half of the same gap. SAF_02 answers but forwards nothing, so no flow
+    may keep a 900 MHz path crossing it. It is recorded as degraded rather than
+    down because the node is alive; `usable` forbids the path either way.
+
+    The scenario is registered for this test only - the three published fault
+    scenarios stay three, since the ns-3 exporter cannot induce this fault.
+    """
+    from aisg.blackboard import scenarios
+
+    def misconfigured(topo):
+        observed = sorted(
+            n.id for n in topo.nodes.values() if n.kind in scenarios.OBSERVED_KINDS
+        )
+        return scenarios.Scenario(
+            "route-misconfig",
+            "Rota ausente em SAF_02", "Missing route at SAF_02",
+            observations=[
+                scenarios.observation_for(
+                    node,
+                    "routing_misconfiguration" if node == "SAF_02" else "healthy",
+                    "route-misconfig",
+                )
+                for node in observed
+            ],
+            commanded={"SAF_02": "routing_misconfiguration"},
+        )
+
+    monkeypatch.setitem(scenarios.SCENARIOS, "route-misconfig", misconfigured)
+    problem = network_ecosystem(topology, "route-misconfig")
+
+    assert problem.degraded == {"SAF_02"}
+    assert problem.down == frozenset() and problem.congested == frozenset()
+    crossing = [
+        site for site, media in problem.world.sites.items()
+        if "SAF_02" in media.path_nodes["radio900"]
+    ]
+    assert crossing, "no 900 MHz path crosses SAF_02, so the case proves nothing"
+    for site in crossing:
+        assert not problem.world.usable(site, "radio900"), site
+
+
 def test_the_world_state_comes_from_the_blackboards_diagnosis(solved):
     assert solved["saf-chain-outage"][0].down == {"SAF_02"}
     assert solved["dual-outage"][0].down == {"SAF_02", "RELAY_5"}

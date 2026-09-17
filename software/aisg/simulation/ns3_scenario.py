@@ -59,6 +59,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Tuple
 
+from aisg.domain.diagnoses import DIAGNOSES, FaultMechanism
 from aisg.domain.topology import LINK_TYPES, Topology
 from aisg.search import shortest_route
 
@@ -113,11 +114,9 @@ NS3_PARAMETERS: Dict[str, object] = {
 
 #: How each commanded diagnosis is induced in the simulator.
 FAULT_BY_DIAGNOSIS: Dict[str, str] = {
-    "node_failure": "node_down",
-    "upstream_relay_failure": "node_down",
-    "rf_interference": "radio_per",
-    "excess_path_loss": "radio_per",
-    "congestion": "flood",
+    name: contract.simulation.mechanism.value
+    for name, contract in DIAGNOSES.items()
+    if contract.simulation.mechanism is not None
 }
 
 #: Topology node kinds and the role each plays in the simulation.
@@ -465,6 +464,15 @@ def _add_faults(
             if roles[node] != "enb":
                 raise ScenarioError(f"{node}: congestion is only modelled on an eNodeB")
             scenario.faults.append((fault_time, "flood", node, str(p["flood_rate"])))
+        else:
+            # A mechanism the contract declares but this exporter does not
+            # dispatch. Refusing beats emitting a scenario with no fault in it,
+            # which would then be scored against predictions expecting one.
+            raise ScenarioError(
+                f"{node}: mechanism {kind!r} for {diagnosis!r} is declared in the "
+                f"diagnosis contract but not implemented by this exporter; "
+                f"implemented: {', '.join(m.value for m in FaultMechanism)}"
+            )
 
     run = solve(board_scenario, topology)
     decided_at = fault_time + float(p["central_decision_delay_s"])

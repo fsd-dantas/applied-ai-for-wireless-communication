@@ -30,6 +30,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from aisg.blackboard.board import Blackboard, Entry, Level
 from aisg.blackboard.sources import KnowledgeSource
+from aisg.domain.diagnoses import DIAGNOSES, RoutingEffect
 from aisg.domain.topology import Topology
 from aisg.expert_system import FIRING_THRESHOLD, combine_cf
 from aisg.planning import plan_with_astar, problem_from_diagnosis
@@ -45,13 +46,19 @@ CORRELATOR_PARAMETERS: Dict[str, float] = {
 }
 
 #: Diagnoses that mean "this node cannot carry traffic".
-OUTAGE_DIAGNOSES = ("node_failure", "upstream_relay_failure")
+OUTAGE_DIAGNOSES = tuple(
+    name for name, contract in DIAGNOSES.items() if contract.correlates_as_outage
+)
 
-#: Incidents that take a node out of the routes the access router may use.
-IMPAIRING_DIAGNOSES = ("node_failure", "upstream_relay_failure", "congestion")
-
-#: Incidents that leave a node usable but degraded: avoided when possible.
-DEGRADING_DIAGNOSES = ("rf_interference", "excess_path_loss", "mac_contention")
+#: Exclude impaired nodes; prefer routes avoiding degraded nodes where possible.
+IMPAIRING_DIAGNOSES = tuple(
+    name for name, contract in DIAGNOSES.items()
+    if contract.routing_effect == RoutingEffect.EXCLUDE
+)
+DEGRADING_DIAGNOSES = tuple(
+    name for name, contract in DIAGNOSES.items()
+    if contract.routing_effect == RoutingEffect.AVOID_IF_POSSIBLE
+)
 
 #: Radio access technologies, by the node kind that terminates them at a site.
 ACCESS_MEDIUM: Dict[str, str] = {"cpe": "plte", "remote_radio": "radio900"}

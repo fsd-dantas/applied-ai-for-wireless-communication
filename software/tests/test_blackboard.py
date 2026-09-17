@@ -28,10 +28,12 @@ from aisg.blackboard import (
     EXPERT_SPECS,
     SCENARIOS,
     TASK_GENERATOR,
+    AccessRouter,
     Blackboard,
     Controller,
     Entry,
     Level,
+    MultiRatArbiter,
     TaskGenerator,
     build_experts,
     build_rule_experts,
@@ -220,6 +222,65 @@ def test_congestion_is_not_traded_for_a_degraded_path(runs):
         assert "hold" not in {e.value for e in run.board.entries(Level.ACCESS, key="decision")}
     for route in runs["saf-chain-outage"].board.entries(Level.ACCESS, key="route"):
         assert route.data["crosses_degraded"] == []
+
+
+# -- a node that answers but forwards nothing --------------------------------
+def _rerouted(topology, *misconfigured: str) -> Blackboard:
+    """
+    Run only the router and the arbiter over hand-placed incidents.
+
+    Skipping the rule experts keeps the two cases below about one question - is a
+    node diagnosed `routing_misconfiguration` still used as transit - rather than
+    about which observations make S19 fire, which the equivalence tests cover.
+    """
+    board = Blackboard()
+    board.publish(
+        "correlator",
+        [
+            Entry(Level.INCIDENT, node, "incident", "routing_misconfiguration", 1.0,
+                  "correlator", (f"{node}:routing_misconfiguration",),
+                  data={"kind": "local", "explains": [], "observed": True, "depth": 0})
+            for node in misconfigured
+        ],
+        levels=(Level.INCIDENT,),
+    )
+    Controller(board, [AccessRouter(topology), MultiRatArbiter()]).loop()
+    return board
+
+
+def test_a_misconfigured_route_is_avoided_when_an_alternative_exists(topology):
+    """
+    SAF_02 answers, so no rule calls it stopped - but it forwards nothing, and
+    routing it through anyway black-holes the traffic. The expected sets are the
+    outage ones above: the correlator reduces `saf-chain-outage` to this same
+    single incident, so avoiding a misconfigured node must reroute identically.
+    """
+    board = _rerouted(topology, "SAF_02")
+    routes = {e.subject: e for e in board.entries(Level.ACCESS, key="route")}
+    assert set(routes) == SAF_02_SITES
+    for site, route in routes.items():
+        assert route.value == "restored", site
+        assert route.data["medium"] == "plte", site
+        assert "SAF_02" not in route.data["path"], site
+        assert route.data["blocker_diagnoses"]["SAF_02"] == "routing_misconfiguration"
+    assert "isolated" not in {e.value for e in board.entries(Level.ACCESS, key="decision")}
+
+
+def test_a_misconfigured_route_with_no_alternative_isolates_the_site(topology):
+    """
+    The no-route half. Both media black-holed leaves the same four sites with
+    nowhere to go as `dual-outage` does, and the arbiter must say isolated rather
+    than hand back a route across a node that will not forward.
+    """
+    board = _rerouted(topology, "SAF_02", "RELAY_5")
+    decisions = {e.subject: e for e in board.entries(Level.ACCESS, key="decision")}
+    assert {s for s, e in decisions.items() if e.value == "isolated"} == RELAY_5_SITES
+    for site in sorted(RELAY_5_SITES):
+        route = board.entries(Level.ACCESS, subject=site, key="route")[0]
+        assert route.value == "unreachable", site
+        assert route.data["medium"] is None, site
+    # a misconfigured node is never merely "held", the way a congested one can be
+    assert "hold" not in {e.value for e in decisions.values()}
 
 
 def test_every_plan_is_valid_and_the_most_damaging_cause_goes_first(runs):

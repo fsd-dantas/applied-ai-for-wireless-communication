@@ -55,6 +55,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, FrozenSet, Hashable, List, Mapping, Optional, Sequence, Set, Tuple
 
+from aisg.domain.diagnoses import DIAGNOSES, EcoEffect
 from aisg.domain.topology import Topology
 from aisg.eco.engine import EcoAgent, EcoWorld, Ecosystem, Move
 
@@ -74,8 +75,16 @@ ECO_NETWORK_PARAMETERS: Dict[str, int] = {
 #: (flow class, priority), highest priority first.
 FLOW_CLASSES: Tuple[Tuple[str, int], ...] = (("scada", 2), ("telemetry", 1))
 
-OUTAGE = ("node_failure", "upstream_relay_failure")
-DEGRADING = ("rf_interference", "excess_path_loss", "mac_contention")
+OUTAGE = tuple(
+    name for name, contract in DIAGNOSES.items() if contract.eco_effect == EcoEffect.DOWN
+)
+DEGRADING = tuple(
+    name for name, contract in DIAGNOSES.items() if contract.eco_effect == EcoEffect.DEGRADED
+)
+CONGESTED = tuple(
+    name for name, contract in DIAGNOSES.items()
+    if contract.eco_effect == EcoEffect.REDUCED_CAPACITY
+)
 
 
 @dataclass(frozen=True)
@@ -304,7 +313,7 @@ def network_ecosystem(
                 down.add(incident.subject)
             elif incident.value in DEGRADING:
                 degraded.add(incident.subject)
-            elif incident.value == "congestion":
+            elif incident.value in CONGESTED:
                 congested.add(incident.subject)
 
     nominal: Dict[str, int] = {}

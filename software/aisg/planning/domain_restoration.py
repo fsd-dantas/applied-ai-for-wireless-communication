@@ -24,19 +24,13 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List, Optional, Sequence
 
+from aisg.domain.diagnoses import DIAGNOSES
 from aisg.domain.topology import Topology
 from aisg.planning.strips import Operator, Predicate, Problem, make_state
 
 #: Expert-system diagnosis -> the fault literal it puts in the initial state.
 DIAGNOSIS_TO_FAULT: Dict[str, Optional[str]] = {
-    "rf_interference": "interference",
-    "excess_path_loss": "excess-path-loss",
-    "mac_contention": "mac-contention",
-    "node_failure": "node-stopped",
-    "upstream_relay_failure": "relay-down",
-    "routing_misconfiguration": "route-missing",
-    "congestion": "congested",
-    "healthy": None,  # nothing to repair; the link is already clear
+    name: contract.planner_fault for name, contract in DIAGNOSES.items()
 }
 
 #: Every fault the domain can repair. A fault outside this set would have no

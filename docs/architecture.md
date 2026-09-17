@@ -47,3 +47,7 @@ No expert calls another: all read and write the board, and the controller picks 
 - Limiares e parâmetros declarados num bloco, nominais e não calibrados. / Thresholds and parameters declared in one block, nominal and uncalibrated.
 - Toda conclusão carrega sua justificativa (regras, suporte, autor). / Every conclusion carries its justification (rules, support, author).
 - Modelo de domínio sintético: ver [domain-model.md](domain-model.md). / Synthetic domain model: see [domain-model.md](domain-model.md).
+
+## Contrato compartilhado / Shared contract
+
+[Diagnosis contract](diagnosis-contract.md): `domain/diagnoses.py` owns diagnosis identifiers, repair literals, routing and eco effects, and explicit simulator capabilities. Existing component mappings are derived from this registry. / O registro central define diagnósticos e capacidades; as tabelas dos componentes são derivadas dele.

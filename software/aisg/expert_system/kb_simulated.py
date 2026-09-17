@@ -41,6 +41,7 @@ from __future__ import annotations
 
 from typing import Dict, Union
 
+from aisg.domain.diagnoses import DIAGNOSES
 from aisg.expert_system.engine import (
     Condition,
     Conclusion,
@@ -72,18 +73,10 @@ SIM_THRESHOLDS: Dict[str, Number] = {
     "retry_high_pct": 30.0,
 }
 
-#: How each diagnosis is COMMANDED in the simulator. This is the protocol for
-#: producing labelled runs: set the condition, run the scenario, and the label is
-#: known because you set it.
+#: Intended induction recipes, not a claim of implemented ns-3 support.
+#: See the shared contract's simulation capability for actual coverage.
 INDUCIBLE_BY: Dict[str, str] = {
-    "rf_interference": "add an emitter on the same channel, or overlap two sector channels",
-    "excess_path_loss": "raise the propagation loss exponent, extend the distance, or cut transmit power",
-    "mac_contention": "add nodes to one PAN, or raise their offered load, so CSMA-CA backoff dominates",
-    "node_failure": "stop the node's device or application mid-run",
-    "upstream_relay_failure": "stop the store-and-forward relay serving the chain",
-    "routing_misconfiguration": "remove or misdirect the route to the destination prefix",
-    "congestion": "drive offered load beyond the link's capacity with a traffic generator",
-    "healthy": "baseline run: nominal propagation, one emitter, offered load within capacity",
+    name: contract.induction_recipe for name, contract in DIAGNOSES.items()
 }
 
 VALIDITY_PT = (

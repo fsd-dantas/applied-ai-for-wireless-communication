@@ -27,16 +27,14 @@ Folders are created when they receive content; this roadmap records what is plan
 
 ## Conformidade e verificação / Conformance and verification
 
-O vocabulário de diagnósticos tem um único dono (`INDUCIBLE_BY`, na base de conhecimento), mas cada consumidor — planejador, quadro-negro, eco-resolução, exportador ns-3 — mantém a sua própria cópia. Os itens abaixo transformam essa coerência, hoje mantida à mão, em verificação automática.
+O vocabulário e as capacidades atuais têm um único dono em `software/aisg/domain/diagnoses.py`. As tabelas do sistema especialista, planejador, quadro-negro, eco-resolução e exportador ns-3 são derivadas desse contrato. Lacunas continuam explícitas; definir o contrato não implementa o comportamento ausente. Ver [contrato de diagnóstico](../docs/diagnosis-contract.md).
 
-The diagnosis vocabulary has a single owner (`INDUCIBLE_BY`, in the knowledge base), yet every consumer — planner, blackboard, eco-resolution, ns-3 exporter — keeps its own copy. The items below turn that coherence, today maintained by hand, into an automated check.
+The diagnosis vocabulary and current capabilities have one owner in `software/aisg/domain/diagnoses.py`. Existing consumer mappings are derived from it. `test_diagnoses.py` checks coverage, baseline handling and explicit unsupported/approximate capabilities. Missing behavior remains future work; see the [diagnosis contract](../docs/diagnosis-contract.md).
 
 | Item | Descrição / Description |
 |---|---|
-| Teste de conformidade do vocabulário / Vocabulary conformance test | garantir que `DIAGNOSIS_TO_FAULT`, `FAULT_BY_DIAGNOSIS` e as partições dos experimentos 002 e 003 cobrem `INDUCIBLE_BY`, com isenções declaradas (`healthy` nunca é comandado) / assert that `DIAGNOSIS_TO_FAULT`, `FAULT_BY_DIAGNOSIS` and the 002/003 partitions cover `INDUCIBLE_BY`, with declared exemptions (`healthy` is never commanded) |
 | Induzir `mac_contention` e `routing_misconfiguration` / Inducing them in the simulator | sem mecanismo em `FAULT_BY_DIAGNOSIS` hoje; exigiria um PHY/MAC com contenção no lugar da abstração ponto a ponto de 900 MHz / no mechanism today; would need a contention-capable PHY/MAC in place of the 900 MHz point-to-point abstraction |
 | Separar `rf_interference` de `excess_path_loss` no simulador / Separating them in the simulator | ambos são induzidos pelo mesmo `radio_per`, então uma execução não distingue o que as regras separam / both are induced by the same `radio_per`, so a run cannot distinguish what the rules separate |
-| Classificar `routing_misconfiguration` em 002 e 003 / Classifying it in 002 and 003 | não aparece em nenhuma partição, então um nó assim continua utilizável como trânsito na rota A\* / it appears in no partition, so such a node stays usable as A\* transit |
 
 A exportação da telemetria simulada como registros de observação — o passo que fecha o ciclo diagnóstico → plano → verificação — está registrada acima, em [Simulador](#simulador--simulator-experiment-004).
 Exporting simulated telemetry as observation records — the step that closes the diagnosis → plan → verification loop — is recorded above, under [Simulador](#simulador--simulator-experiment-004).
