@@ -1,0 +1,2 @@
+time_s,subject,event,detail
+10,SAF_02,fault,"node_down"

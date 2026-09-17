@@ -1,0 +1,18 @@
+aisg dual-homed backhaul: 60 nodes, 52 point-to-point links, 15 sites, CPE antenna 12 dBi, 30 s simulated
+probe: 52 nodes reported over 16-24 s
+1,ER_01,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+2,ER_02,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+3,ER_03,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+4,ER_04,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+5,ER_05,radio900,14,14,0.00,36.76,36.76,27,27,radio900,radio900
+6,ER_06,radio900,14,4,71.43,98.67,98.67,27,8,radio900,radio900
+7,ER_07,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+8,ER_08,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+9,ER_09,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+10,ER_10,radio900,14,14,0.00,36.80,36.80,27,27,radio900,radio900
+11,ER_11,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+12,ER_12,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+13,ER_13,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+14,ER_14,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+15,ER_15,plte,14,14,0.00,18.93,18.93,27,27,plte,plte
+event 10 s  SAF_02  fault  node_down

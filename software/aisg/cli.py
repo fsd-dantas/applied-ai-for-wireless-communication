@@ -793,7 +793,7 @@ def cmd_ns3_diagnose(args: argparse.Namespace) -> int:
     if score.spurious:
         print(f"  {'incidentes sem falha comandada' if pt else 'incidents with no commanded fault'}: "
               + ", ".join(f"{n}:{v}" for n, v in score.spurious))
-    return 0 if score.exact else 1
+    return 0 if score.exact and run.quiescent else 1
 
 
 # ---------------------------------------------------------------------------

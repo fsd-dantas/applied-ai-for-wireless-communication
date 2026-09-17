@@ -38,7 +38,7 @@ The diagnosis vocabulary and current capabilities have one owner in `software/ai
 
 A telemetria simulada já volta como registro de observação: `aisg ns3-diagnose --results <dir>` lê o `nodes.csv` de uma execução com `--probe` e diagnostica pelo mesmo quadro-negro. Em `saf-chain-outage` a alcançabilidade medida sozinha nomeia `SAF_02` e explica os 17 nós a jusante. Falta estender aos outros dois cenários e aplicar as ações recomendadas dentro da própria execução.
 
-Simulated telemetry already returns as an observation record: `aisg ns3-diagnose --results <dir>` reads the `nodes.csv` of a `--probe` run and diagnoses through the same blackboard. On `saf-chain-outage`, measured reachability alone names `SAF_02` and explains the 17 nodes downstream. What remains is extending it to the other two scenarios and applying the recommended actions inside the run itself.
+Simulated telemetry already returns as an observation record: `aisg ns3-diagnose --results <dir>` reads the `nodes.csv` of a `--probe` run and diagnoses through the same blackboard. On `saf-chain-outage`, measured reachability alone names `SAF_02` and explains the 17 nodes downstream. The [recovery replay](../experiments/004-multi-rat-simulation/telemetry-replay.md) now applies the inferred medium-switch decisions in a second, matched simulator run and measures recovery. Live control, other fault scenarios, and execution of repair actions remain future work.
 
 ## Revisão de literatura / Literature review (`literature/`)
 

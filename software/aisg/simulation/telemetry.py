@@ -12,8 +12,9 @@ PT-BR: Fecha o ciclo diagnostico -> plano -> verificacao pelo lado que faltava.
        registro. E o mesmo contrato do leitor de Prometheus: instrumentar mais
        aumenta a cobertura, e nada e inventado enquanto isso.
 
-EN:    Closes the diagnosis -> plan -> verification loop from the side that was
-       missing. The simulator measures; this module translates the measurement
+EN:    Implements offline diagnosis from recorded simulator measurements.
+       It does not apply the resulting actions back to the simulator.
+       The simulator measures; this module translates the measurement
        into the knowledge base's vocabulary; the blackboard diagnoses. The
        COMMANDED fault never enters here: it exists in the scenario only to score
        the result afterwards, and `events.csv` - which is where the commanded
@@ -41,6 +42,7 @@ no PHY or MAC quantity is needed for it.
 from __future__ import annotations
 
 import csv
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Tuple
@@ -105,6 +107,27 @@ class NodeReport:
     last_seen_s: Optional[float]
     owd_mean_ms: float
 
+    def __post_init__(self) -> None:
+        numbers = (self.window_start_s, self.window_end_s, self.loss_pct, self.owd_mean_ms)
+        if not all(math.isfinite(value) for value in numbers):
+            raise ValueError("telemetry values must be finite")
+        if self.window_start_s < 0 or self.window_end_s <= self.window_start_s:
+            raise ValueError("invalid measurement window")
+        if self.expected <= 0 or not 0 <= self.received <= self.expected:
+            raise ValueError("heartbeat counts require expected > 0 and 0 <= received <= expected")
+        expected_loss = 100.0 * (self.expected - self.received) / self.expected
+        if not 0 <= self.loss_pct <= 100 or abs(self.loss_pct - expected_loss) > 0.011:
+            raise ValueError("loss_pct disagrees with heartbeat counts")
+        if self.owd_mean_ms < 0:
+            raise ValueError("one-way delay cannot be negative")
+        if (self.last_seen_s is not None) != (self.received > 0):
+            raise ValueError("last_seen_s must be present exactly when heartbeats arrived")
+        # The window identifies send times; packets may arrive after its end.
+        if self.last_seen_s is not None and (
+            not math.isfinite(self.last_seen_s) or self.last_seen_s < self.window_start_s
+        ):
+            raise ValueError("invalid last_seen_s")
+
     @property
     def responding(self) -> bool:
         """Whether anything at all arrived from this node in the window."""
@@ -144,10 +167,14 @@ def read_node_reports(results_dir: Path | str) -> List[NodeReport]:
                     last_seen_s=float(last_seen) if last_seen else None,
                     owd_mean_ms=float(row["owd_mean_ms"]),
                 ))
-            except (KeyError, ValueError) as exc:
+            except (KeyError, ValueError, TypeError, AttributeError) as exc:
                 raise TelemetryError(f"{path}: line {number}: {exc}") from None
     if not reports:
         raise TelemetryError(f"{path} declares no node")
+    if len({r.node for r in reports}) != len(reports):
+        raise TelemetryError(f"{path}: duplicate node reports")
+    if len({(r.window_start_s, r.window_end_s) for r in reports}) != 1:
+        raise TelemetryError(f"{path}: node reports must share one measurement window")
     return reports
 
 
@@ -228,7 +255,11 @@ def observation_for(
     )
 
     upstream = upstream_of(topology, report.node, source_node)
-    if upstream is None or upstream == source_node:
+    if upstream is None:
+        record.unavailable["upstream_relay_reachable"] = (
+            "No upstream route is known in the declared topology"
+        )
+    elif upstream == source_node:
         # The control centre is the observer. Everything in this file arrived
         # there, so treating it as reachable states a fact, not an assumption.
         record.values["upstream_relay_reachable"] = ("yes", REACHABILITY_CF)
@@ -252,12 +283,21 @@ def observation_for(
             f"(an eNodeB carries no IP stack in this model)"
         )
 
+    missing = {
+        neighbour for neighbour, _ in topology.neighbours(report.node)
+        if neighbour != source_node and neighbour not in reports
+    }
     label, silent = _neighbours_affected(topology, report.node, reports)
-    record.values["neighbours_affected"] = (label, REACHABILITY_CF)
-    record.provenance["neighbours_affected"] = (
-        f"{NODES_CSV}: {silent} of the declared neighbours of {report.node} "
-        f"reported nothing in the same window"
-    )
+    if missing and silent < MANY_NEIGHBOURS:
+        record.unavailable["neighbours_affected"] = (
+            f"Missing neighbour telemetry: {', '.join(sorted(missing))}"
+        )
+    else:
+        record.values["neighbours_affected"] = (label, REACHABILITY_CF)
+        record.provenance["neighbours_affected"] = (
+            f"{NODES_CSV}: {silent} declared neighbours of {report.node} "
+            f"reported nothing in the same window"
+        )
 
     for variable, reason in UNMEASURED.items():
         if variable not in record.values:
@@ -343,17 +383,17 @@ class Score:
     def spurious(self) -> Tuple[Tuple[str, str], ...]:
         """Incidents on nodes where nothing was commanded.
 
-        A downstream node correctly diagnosed `upstream_relay_failure` is NOT
-        spurious - no fault was commanded there, and saying so is right. Only a
-        node with no commanded fault and no explanation counts against us, which
-        is why this is reported rather than scored.
+        This is an unmatched-node report, not proof of false positives: downstream
+        consequences require separate expected labels. Exact incident-set matching
+        is intentionally stricter and permits no extra diagnosis pairs.
         """
         commanded_nodes = {node for node, _ in self.commanded}
         return tuple(sorted(f for f in self.found if f[0] not in commanded_nodes))
 
     @property
     def exact(self) -> bool:
-        return not self.missed and set(self.found) >= set(self.commanded)
+        """Exact incident-set agreement, including absence of extra diagnoses."""
+        return set(self.found) == set(self.commanded)
 
 
 def score_against_commanded(run, commanded: Mapping[str, str]) -> Score:

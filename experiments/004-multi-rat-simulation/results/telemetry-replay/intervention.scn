@@ -13,6 +13,7 @@ param central_decision_delay_s 3
 param cpe_antenna_beamwidth_deg 65
 param cpe_antenna_max_gain_dbi 12
 param enb_tx_power_dbm 46
+param fault_scenario saf-chain-outage
 param fault_time_s 10
 param fibre_rate 1Gbps
 param flood_rate 20Mbps
@@ -363,3 +364,6 @@ path ER_14 radio900 SAF_01 RM_14
 path ER_14 plte tunnel CPE_14
 path ER_15 radio900 SAF_01 RM_15
 path ER_15 plte tunnel CPE_15
+# fault scenario 'saf-chain-outage'; ground truth for scoring only
+fault 10 node_down SAF_02 -
+failover 31 ER_06 plte

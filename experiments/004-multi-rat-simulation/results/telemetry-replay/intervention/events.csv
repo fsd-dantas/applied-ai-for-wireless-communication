@@ -1,0 +1,4 @@
+time_s,subject,event,detail
+10,SAF_02,fault,"node_down"
+31,ER_06,switch-noc,"radio900 -> plte (central: blackboard plan)"
+31,ER_06,switch-er,"radio900 -> plte (central: blackboard plan)"

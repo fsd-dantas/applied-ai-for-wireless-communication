@@ -1,0 +1,16 @@
+index,site,primary,scada_sent,scada_received,scada_loss_pct,rtt_mean_ms,rtt_max_ms,telemetry_sent,telemetry_received,noc_medium_end,er_medium_end
+1,ER_01,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+2,ER_02,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+3,ER_03,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+4,ER_04,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+5,ER_05,radio900,29,29,0.00,36.76,36.76,57,57,radio900,radio900
+6,ER_06,radio900,29,4,86.21,98.67,98.67,57,8,radio900,radio900
+7,ER_07,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+8,ER_08,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+9,ER_09,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+10,ER_10,radio900,29,29,0.00,36.80,36.80,57,57,radio900,radio900
+11,ER_11,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+12,ER_12,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+13,ER_13,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+14,ER_14,plte,29,29,0.00,18.93,18.93,57,57,plte,plte
+15,ER_15,plte,29,29,0.00,18.93,18.93,57,57,plte,plte

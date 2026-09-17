@@ -1,0 +1,303 @@
+{
+  "design": "two-pass causal replay, not live control; dual topology only",
+  "observation_stop_s": 30,
+  "action_at_s": 31,
+  "scoring_window_s": [
+    31,
+    58
+  ],
+  "reply_deadline_s": 2,
+  "seed": 1,
+  "run_number": 1,
+  "actions": [
+    {
+      "site": "ER_06",
+      "from": "radio900",
+      "to": "plte",
+      "support": [
+        "SAF_02"
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "node": "SAF_02",
+      "diagnosis": "node_failure"
+    }
+  ],
+  "pre_action_telemetry_identical": true,
+  "all_switched_sites_recovered": true,
+  "no_loss_regressions": true,
+  "sites": {
+    "ER_01": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.0559293999999966
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.0559293999999966
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_02": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.0929293999999956
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.0929293999999956
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_03": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.1299293999999946
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.1299293999999946
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_04": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.1669294000000008
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.1669294000000008
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_05": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.2217604000000009
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.2217604000000009
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_06": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 0,
+        "loss_pct": 100.0,
+        "first_reply_after_action_s": null
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.2409293999999989
+      },
+      "loss_reduction_percentage_points": 100.0
+    },
+    "ER_07": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.2779293999999979
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.2779293999999979
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_08": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.314929399999997
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.314929399999997
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_09": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.351929399999996
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.351929399999996
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_10": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.4068023999999966
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.4068023999999966
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_11": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.425929399999994
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.425929399999994
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_12": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.4629294000000002
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.4629294000000002
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_13": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.4999293999999992
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.4999293999999992
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_14": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.5369293999999982
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.5369293999999982
+      },
+      "loss_reduction_percentage_points": 0.0
+    },
+    "ER_15": {
+      "baseline": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.5739293999999973
+      },
+      "intervention": {
+        "sent": 13,
+        "replied_within_deadline": 13,
+        "loss_pct": 0.0,
+        "first_reply_after_action_s": 1.5739293999999973
+      },
+      "loss_reduction_percentage_points": 0.0
+    }
+  },
+  "commands": [
+    [
+      "software/ns-3-modules/dual-homed-backhaul/build/dual-homed-backhaul",
+      "--scenario=software/ns-3-modules/dual-homed-backhaul/build/telemetry-replay-fixed/baseline.scn",
+      "--outDir=software/ns-3-modules/dual-homed-backhaul/build/telemetry-replay-fixed/measurement",
+      "--simTime=30",
+      "--failover=none",
+      "--probe=1",
+      "--probeStart=16",
+      "--probeStop=24",
+      "--probeInterval=1",
+      "--RngSeed=1",
+      "--RngRun=1"
+    ],
+    [
+      "software/ns-3-modules/dual-homed-backhaul/build/dual-homed-backhaul",
+      "--scenario=software/ns-3-modules/dual-homed-backhaul/build/telemetry-replay-fixed/baseline.scn",
+      "--outDir=software/ns-3-modules/dual-homed-backhaul/build/telemetry-replay-fixed/baseline",
+      "--simTime=60",
+      "--failover=none",
+      "--probe=1",
+      "--probeStart=16",
+      "--probeStop=24",
+      "--probeInterval=1",
+      "--RngSeed=1",
+      "--RngRun=1"
+    ],
+    [
+      "software/ns-3-modules/dual-homed-backhaul/build/dual-homed-backhaul",
+      "--scenario=software/ns-3-modules/dual-homed-backhaul/build/telemetry-replay-fixed/intervention.scn",
+      "--outDir=software/ns-3-modules/dual-homed-backhaul/build/telemetry-replay-fixed/intervention",
+      "--simTime=60",
+      "--failover=central",
+      "--probe=1",
+      "--probeStart=16",
+      "--probeStop=24",
+      "--probeInterval=1",
+      "--RngSeed=1",
+      "--RngRun=1"
+    ]
+  ],
+  "sha256": {
+    "input_scenario": "51f19f718328df1b77c5c181a351f80add22b33cbb56280269f9aff878600590",
+    "simulator": "c6560bd09d263343768af9bba8aceb1409edd00952ccbc908de99676e59682c9"
+  }
+}

@@ -40,6 +40,7 @@ from aisg.simulation.telemetry import (
     diagnose_run,
     observations_from_run,
     read_node_reports,
+    Score,
     score_against_commanded,
     upstream_of,
 )
@@ -161,7 +162,10 @@ def test_a_fully_reporting_network_blames_no_one(tmp_path, topology):
     for record in observations_from_run(tmp_path, topology):
         assert record.values["node_responding"] == ("yes", 1.0)
         assert record.values["packet_loss_pct"][0] == pytest.approx(0.0)
-        assert record.values["neighbours_affected"] == ("none", 1.0)
+        if "neighbours_affected" in record.values:
+            assert record.values["neighbours_affected"] == ("none", 1.0)
+        else:
+            assert "neighbours_affected" in record.unavailable
 
 
 def test_neighbours_affected_counts_only_silent_declared_neighbours(
@@ -175,7 +179,7 @@ def test_neighbours_affected_counts_only_silent_declared_neighbours(
     reporting = [
         r for name, r in records.items()
         if name not in (stopped, stranded)
-        and r.values["neighbours_affected"][0] != "none"
+        and r.values.get("neighbours_affected", ("none",))[0] != "none"
     ]
     assert reporting, "a neighbour of the silent pair should notice"
     for record in reporting:
@@ -258,6 +262,65 @@ def test_a_malformed_row_names_the_line(tmp_path):
         read_node_reports(tmp_path)
 
 
+@pytest.mark.parametrize("row", [
+    "SAF_01,saf,16,29,0,0,0,,0",  # no measurement opportunities
+    "SAF_01,saf,16,29,13,14,0,29,1",  # impossible counts
+    "SAF_01,saf,16,29,13,0,0,,0",  # inconsistent loss
+    "SAF_01,saf,nan,29,13,13,0,29,1",
+    "SAF_01,saf,29,16,13,13,0,29,1",
+    "SAF_01,saf,16,29,13,13,0,,1",  # missing arrival time
+    "SAF_01,saf,16,29,13,13,0,29,-1",
+    "SAF_01,saf,16,29,13",  # truncated row
+])
+def test_invalid_measurements_are_rejected_before_diagnosis(tmp_path, row):
+    (tmp_path / "nodes.csv").write_text(HEADER + "\n" + row + "\n", encoding="utf-8")
+    with pytest.raises(TelemetryError, match="line 2"):
+        read_node_reports(tmp_path)
+
+
+@pytest.mark.parametrize("second,reason", [
+    ("SAF_01,saf,16,29,13,13,0,29,1", "duplicate"),
+    ("SAF_02,saf,17,29,13,13,0,29,1", "measurement window"),
+])
+def test_reports_cannot_overwrite_nodes_or_mix_windows(tmp_path, second, reason):
+    (tmp_path / "nodes.csv").write_text(
+        HEADER + "\nSAF_01,saf,16,29,13,13,0,29,1\n" + second + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(TelemetryError, match=reason):
+        read_node_reports(tmp_path)
+
+
+def test_missing_neighbour_telemetry_is_unknown(tmp_path, topology):
+    write_nodes_csv(tmp_path, silent=set())
+    path = tmp_path / "nodes.csv"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line for line in lines if not line.startswith("SAF_02,")) + "\n",
+                    encoding="utf-8")
+    records = {r.subject_id: r for r in observations_from_run(tmp_path, topology)}
+    assert "neighbours_affected" not in records["SAF_01"].values
+    assert "SAF_02" in records["SAF_01"].unavailable["neighbours_affected"]
+
+
+def test_unknown_upstream_route_is_not_assumed_reachable(tmp_path, topology, monkeypatch):
+    from aisg.simulation import telemetry
+    write_nodes_csv(tmp_path, silent=set())
+    monkeypatch.setattr(telemetry, "upstream_of", lambda *_args: None)
+    for record in observations_from_run(tmp_path, topology):
+        assert "upstream_relay_reachable" not in record.values
+        assert "upstream_relay_reachable" in record.unavailable
+
+
+@pytest.mark.parametrize("extra", [
+    ("SAF_02", "congestion"),
+    ("SAF_03", "node_failure"),
+])
+def test_exact_score_rejects_extra_diagnoses_even_on_the_correct_node(extra):
+    truth = (("SAF_02", "node_failure"),)
+    assert Score(found=truth, commanded=truth).exact
+    assert not Score(found=truth + (extra,), commanded=truth).exact
+
+
 def test_nodes_the_topology_does_not_declare_are_refused(tmp_path, topology):
     (tmp_path / "nodes.csv").write_text(
         HEADER + "\nGHOST_01,saf,16,29,13,13,0.00,29,1.0\n", encoding="utf-8"
@@ -324,6 +387,6 @@ def test_scoring_separates_the_commanded_cause_from_its_consequences():
     score = score_against_commanded(_Run(), {"SAF_02": "node_failure"})
     assert score.hits == (("SAF_02", "node_failure"),)
     assert score.missed == ()
-    assert score.exact
+    assert not score.exact
     # a correctly diagnosed consequence is reported, not counted as an error
     assert score.spurious == (("SAF_03", "upstream_relay_failure"),)

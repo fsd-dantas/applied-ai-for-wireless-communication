@@ -35,6 +35,30 @@ Problema, subquestões e metodologia / problem, sub-questions and methodology: [
 | 003 | [Eco-resolução / Eco-resolution](experiments/003-eco-resolution/)                                                 | Agentes reativos: satisfação, agressão, fuga, dependência / Reactive agents: satisfaction, aggression, flight, dependency                |
 | 004 | [Simulação multi-RAT em ns-3 / Multi-RAT ns-3 simulation](experiments/004-multi-rat-simulation/)                  | LTE privativo, 900 MHz, injeção de falhas / Private LTE, 900 MHz, fault injection                                                        |
 
+### Como os experimentos se encadeiam / How the experiments chain
+
+```
+topologia declarada / declared topology — fonte única de verdade / single source of truth
+   │
+   ├─► 001 diagnóstico → plano → rota / diagnosis → plan → route   ┐
+   ├─► 002 quadro-negro / blackboard                               ├─ casos declarados,
+   └─► 003 eco-resolução / eco-resolution                          ┘  repetíveis e rotuláveis /
+              │                                                       declared, repeatable,
+              │                                                       labellable cases
+              │ falhas a induzir, plano central /
+              │ faults to induce, central plan
+              ▼
+      004 simulação ns-3 / ns-3 simulation — planta / plant
+              │
+              │ telemetria medida / measured telemetry (nodes.csv)
+              ▼
+      002 quadro-negro / blackboard ──► ações inferidas / inferred actions ──► 004 (replay)
+```
+
+001–003 raciocinam sobre **casos declarados**: a ausência de dados rotulados de falha exige casos comandados, repetíveis e rotuláveis. 004 é o **experimento integrador** — recebe deles as falhas a induzir e o plano a aplicar, e devolve medição. Justificativa da sequência em [`research/methodology.md`](research/methodology.md).
+
+001–003 reason over **declared cases**: the absence of labelled fault data demands commanded, repeatable, labellable ones. 004 is the **integrating experiment** — it receives the faults to induce and the plan to apply, and returns measurement. The sequence is justified in [`research/methodology.md`](research/methodology.md).
+
 ## Organização / Layout
 
 ```
@@ -43,9 +67,6 @@ experiments/    um diretório por experimento / one directory per experiment
 software/       pacote aisg e testes / aisg package and tests
 docs/           primeiros passos, arquitetura, modelo de domínio, figuras / getting started, architecture, domain model, figures
 ```
-
-Pastas são criadas quando têm conteúdo; o [roteiro](research/roadmap.md) registra o que está planejado.
-Folders are created when they have content; the [roadmap](research/roadmap.md) records what is planned.
 
 ## Início rápido / Quick start
 

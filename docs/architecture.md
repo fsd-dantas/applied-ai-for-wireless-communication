@@ -11,9 +11,13 @@ The `aisg` package (under `software/aisg/`) holds the decision components. Each 
 | `search/` | A\* e estratégias não informadas / A\* and uninformed strategies | 001 |
 | `blackboard/` | Quadro-negro, especialistas, controlador, cenários / Blackboard, experts, controller, scenarios | 002 |
 | `eco/` | Motor de eco-resolução, mundo dos blocos, fluxos da rede / Eco-resolution engine, Blocks World, network flows | 003 |
-| `simulation/` | Exportação do backhaul em duplo acesso para o ns-3 / Export of the dual-homed backhaul to ns-3 | 004 |
-| `observation.py`, `prometheus.py` | Registros de observação e coleta de evidência / Observation records and evidence collection | 001 |
+| `simulation/` | Exportação do backhaul para o ns-3, leitura da telemetria medida de volta como observação e repetição causal que aplica as ações inferidas / Export of the backhaul to ns-3, reading measured telemetry back as observations, and the causal replay that applies the inferred actions | 004 |
+| `observation.py`, `prometheus.py` | Registros de observação e coleta de evidência; o mesmo formato traz a telemetria medida do 004 de volta ao quadro-negro / Observation records and evidence collection; the same format carries 004's measured telemetry back to the blackboard | 001, 004 |
 | `cli.py` | Interface de linha de comando / Command-line interface | todos / all |
+
+Como os quatro experimentos se encadeiam — casos declarados alimentando 001–003, o 004 como experimento integrador e o retorno da telemetria medida — está no [README](../README.md#como-os-experimentos-se-encadeiam--how-the-experiments-chain), com a justificativa da ordem em [`research/methodology.md`](../research/methodology.md).
+
+How the four experiments chain — declared cases feeding 001–003, 004 as the integrating experiment, and the measured telemetry returning — is in the [README](../README.md#como-os-experimentos-se-encadeiam--how-the-experiments-chain), with the order's justification in [`research/methodology.md`](../research/methodology.md).
 
 ## Encadeamento de um incidente / Single-incident chain
 

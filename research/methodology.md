@@ -20,6 +20,20 @@ Scenarios are simulated by methodological choice: a **commanded** fault is repea
 **A verdade comandada serve só para avaliar.** Nenhum componente de decisão lê a falha que o cenário comandou; ela é usada exclusivamente para pontuar o resultado.
 **Commanded ground truth is for scoring only.** No decision component reads the fault a scenario commanded; it is used exclusively to score the result.
 
+## Sequência dos experimentos / Experiment sequence
+
+A ordem 001 → 002 → 003 → 004 é consequência da primeira restrição do problema, e não uma cronologia de conveniência. Sem dados rotulados de falha, o conhecimento não pode ser aprendido: precisa ser **codificado** (001) e depois dividido e coordenado (002, 003). Verificar essa codificação exige casos **rotuláveis e repetíveis**, que uma rede de campo não oferece e que um simulador só oferece quando a falha é **comandada** — daí os casos declarados que alimentam 001–003.
+
+O experimento 004 é o **experimento integrador**: recebe dos anteriores as falhas a induzir e o plano a aplicar, e fornece o que casos declarados não podem fornecer — uma planta onde as consequências são **calculadas**, e não afirmadas. É necessariamente o último, porque depende da saída dos outros três.
+
+O ciclo fecha na direção inversa para o quadro-negro: `aisg ns3-diagnose` diagnostica a partir de `nodes.csv` sem ler a falha comandada, e a [repetição causal](../experiments/004-multi-rat-simulation/telemetry-replay.md) aplica as decisões inferidas e mede a recuperação. Hoje esse retorno cobre um cenário e um tipo de decisão; 001 e 003 continuam sobre casos declarados.
+
+The order 001 → 002 → 003 → 004 follows from the problem's first constraint, not from convenience. With no labelled fault data the knowledge cannot be learned: it must be **encoded** (001), then split and coordinated (002, 003). Checking that encoding needs **labellable, repeatable** cases, which a field network cannot give and which a simulator gives only when the fault is **commanded** — hence the declared cases feeding 001–003.
+
+Experiment 004 is the **integrating experiment**: it receives the faults to induce and the plan to apply from the earlier ones, and supplies what declared cases cannot — a plant where consequences are **computed** rather than asserted. It is necessarily last, because it depends on the other three's output.
+
+The loop closes in the reverse direction for the blackboard: `aisg ns3-diagnose` diagnoses from `nodes.csv` without reading the commanded fault, and the [causal replay](../experiments/004-multi-rat-simulation/telemetry-replay.md) applies the inferred decisions and measures recovery. Today that return path covers one scenario and one decision type; 001 and 003 still run on declared cases.
+
 ## Estratégia de validação / Validation strategy
 
 | Propriedade / Property | Verificação / Check | Oráculo / Oracle | Exp. |

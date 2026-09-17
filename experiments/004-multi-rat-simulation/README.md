@@ -2,11 +2,20 @@
 
 # 004 — Simulação multi-RAT em ns-3 / Multi-RAT ns-3 simulation
 
+Novo procedimento / New procedure: [telemetry-driven recovery replay](telemetry-replay.md)
+measures node heartbeats, derives a blackboard decision, applies it in a matched
+ns-3 replay, and compares recovery against no intervention. This is a two-pass
+experiment, not live simulator control.
+
 > **PT-BR** — O backhaul em duplo acesso da topologia declarada — cadeia de repetidores armazena-e-encaminha em 900 MHz e LTE privativo alcançando os mesmos roteadores de borda — construído num simulador de eventos discretos, para que as recomendações dos experimentos anteriores possam ser verificadas contra tráfego simulado.
 >
 > **EN** — The dual-homed backhaul from the declared topology — a 900 MHz store-and-forward relay chain and private LTE reaching the same edge routers — built in a discrete-event simulator, so the recommendations of the earlier experiments can be checked against simulated traffic.
 
-Questão / Question: [RQ6](../../research/research-questions.md) · Programa / program: [`software/ns-3-modules/`](../../software/ns-3-modules/) · Exportador / exporter: [`software/aisg/simulation/`](../../software/aisg/simulation/) · Estado / Status: **concluído no modelo / complete on the model**
+Questão / Question: [RQ6](../../research/research-questions.md) · Programa / program: [`software/ns-3-modules/`](../../software/ns-3-modules/) · Exportador / exporter: [`software/aisg/simulation/`](../../software/aisg/simulation/) · Papel / Role: **experimento integrador / integrating experiment** · Estado / Status: **concluído no modelo / complete on the model**
+
+Este é o último experimento da cadeia, e depende dos anteriores: as falhas que ele induz vêm dos cenários comandados do [experimento 002](../002-multi-expert-blackboard/), e o plano central que ele aplica é a decisão do próprio quadro-negro. Na direção inversa, `aisg ns3-diagnose` diagnostica a partir da telemetria medida, sem ler a falha comandada. Ver a justificativa da sequência em [`research/methodology.md`](../../research/methodology.md).
+
+This is the last experiment in the chain, and it depends on the earlier ones: the faults it induces come from [experiment 002](../002-multi-expert-blackboard/)'s commanded scenarios, and the central plan it applies is the blackboard's own decision. In the reverse direction, `aisg ns3-diagnose` diagnoses from measured telemetry, without reading the commanded fault. The sequence is justified in [`research/methodology.md`](../../research/methodology.md).
 
 ---
 
@@ -16,11 +25,15 @@ Construir o backhaul em duplo acesso da topologia declarada num simulador de eve
 
 Build the dual-homed backhaul from the declared topology in a discrete-event simulator (ns-3), so the recommendations of experiments 001–003 — diagnosis, restoration plan and medium-switch decision — can be checked against simulated traffic, rather than only against a hand-written expected set.
 
+E, na direção inversa, fechar o ciclo: a telemetria medida da própria planta alimenta o diagnóstico — sem que a falha comandada seja lida —, e as ações daí inferidas são aplicadas e medidas contra um braço de controle idêntico.
+
+And, in the reverse direction, to close the loop: the plant's own measured telemetry feeds the diagnosis — without the commanded fault being read — and the actions inferred from it are applied and measured against an identical control arm.
+
 ## Questão de pesquisa / Research question
 
-> **RQ6 — Verificação por simulação.** As recomendações, aplicadas a uma rede multi-RAT simulada, restauram o serviço que prometem?
+> **RQ6 — Integração e verificação em malha fechada.** A telemetria de uma rede multi-RAT simulada sustenta o diagnóstico sem acesso à falha comandada, e as recomendações daí derivadas restauram o serviço que prometem?
 >
-> **RQ6 — Simulation-grounded verification.** Do the recommendations, applied to a simulated multi-RAT network, restore the service they promise?
+> **RQ6 — Closed-loop integration and verification.** Does telemetry from a simulated multi-RAT network support diagnosis without access to the commanded fault, and do the recommendations derived from it restore the service they promise?
 
 Ver [`research/research-questions.md`](../../research/research-questions.md) para as demais subquestões (RQ1–RQ6).
 See [`research/research-questions.md`](../../research/research-questions.md) for the other sub-questions (RQ1–RQ6).
@@ -164,7 +177,9 @@ Falha aos 10 s. Arquivos em [`results/`](results/). / Fault at 10 s. Files under
 - Uma execução determinística por caso; sem sementes múltiplas nem intervalos de confiança. / One deterministic run per case; no multiple seeds or confidence intervals.
 - Sete consultas por site na janela de medição: uma consulta perdida vale 14,3%. / Seven polls per site in the measurement window: one lost poll is 14.3%.
 - Congestionamento modelado como inundação UDP de 20 Mbps por CPE; interferência como taxa de erro de pacote de 0,6 nos enlaces de RM_07. / Congestion modelled as a 20 Mbps UDP flood per CPE; interference as a 0.6 packet error rate on RM_07's links.
-- O ciclo fecha hoje apenas para `saf-chain-outage`; os outros dois cenários ainda não têm execução com `--probe` versionada. / The loop closes today only for `saf-chain-outage`; the other two scenarios have no versioned `--probe` run yet.
+- O diagnóstico offline por telemetria está verificado para `saf-chain-outage`; aplicar as ações inferidas de volta ao simulador ainda está pendente. Os outros dois cenários não têm execução com `--probe` versionada. / Offline telemetry-driven diagnosis is checked for `saf-chain-outage`; applying the inferred actions back to the simulator remains pending. The other two scenarios have no versioned `--probe` run yet.
+
+O adaptador recusa contagens inválidas, nós duplicados e janelas diferentes; evidência ausente permanece desconhecida. A correspondência exata na avaliação exige igualdade dos conjuntos de incidentes, sem diagnósticos extras. / The adapter rejects invalid counts, duplicate nodes and mixed windows; missing evidence stays unknown. Exact scoring requires equal incident sets, with no extra diagnoses.
 - A única evidência medida por nó é alcançabilidade. Potência, relação sinal-ruído, retransmissão de MAC e presença de rota continuam **indisponíveis** — declaradas como tal em cada registro, com o motivo. Basta para separar parada de nó de queda de repetidor a montante; não basta para os diagnósticos de rádio. / The only per-node evidence measured is reachability. Received power, SNR, MAC retry and route presence remain **unavailable** — declared as such in every record, with the reason. Enough to separate a node failure from an upstream relay failure; not enough for the radio diagnoses.
 - Os batimentos são de mão única: o cenário não instala rota do NOC para um repetidor, então não há ida e volta a medir e `rtt_ms` fica indisponível. O atraso de ida é exportado como `owd_mean_ms`, e deliberadamente **não** é usado como RTT. / Heartbeats are one-way: the scenario installs no route from the NOC to a relay, so there is no round trip to time and `rtt_ms` stays unavailable. One-way delay is exported as `owd_mean_ms` and deliberately **not** reused as RTT.
 
