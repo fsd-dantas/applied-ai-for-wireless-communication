@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections import Counter
+from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
 from aisg import __version__
@@ -68,7 +69,14 @@ from aisg.planning import (
 from aisg.planning.domain_restoration import DESTINATION_KINDS
 from aisg.search import RoutingProblem, astar, compare
 from aisg.search.algorithms import SearchResult
-from aisg.simulation import ScenarioError, build_ns3_scenario
+from aisg.simulation import (
+    ScenarioError,
+    TelemetryError,
+    build_ns3_scenario,
+    diagnose_run,
+    observations_from_run,
+    score_against_commanded,
+)
 
 RULE = "=" * 78
 THIN = "-" * 78
@@ -698,6 +706,97 @@ def cmd_ns3_export(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# ns-3 telemetry -> observation records -> blackboard
+# ---------------------------------------------------------------------------
+def cmd_ns3_diagnose(args: argparse.Namespace) -> int:
+    pt = args.lang == "pt"
+    topology = load_topology(getattr(args, "topology", "dual"))
+    kb = build_simulated_knowledge_base()
+    try:
+        observations = observations_from_run(args.results, topology)
+    except TelemetryError as exc:
+        print(exc)
+        return 2
+
+    print(_header(
+        f"Diagnostico a partir da telemetria simulada: {args.results}" if pt
+        else f"Diagnosis from simulated telemetry: {args.results}"
+    ))
+    askable = sum(1 for v in kb.variables.values() if v.askable)
+    measured = sorted({name for record in observations for name in record.values})
+    print(f"  {len(observations)} "
+          + ("registros de observacao" if pt else "observation records")
+          + f", {'janela' if pt else 'window'} {observations[0].window}, "
+          + f"{'fonte' if pt else 'source'} {observations[0].source}")
+    print(f"  {len(measured)}/{askable} "
+          + ("variaveis medidas" if pt else "askable variables measured")
+          + f": {', '.join(measured)}")
+    silent = [
+        record.subject_id for record in observations
+        if record.values.get("node_responding", ("yes", 1.0))[0] == "no"
+    ]
+    print(f"  {'sem resposta' if pt else 'not responding'} ({len(silent)}): "
+          f"{', '.join(silent) or '-'}")
+
+    if args.save_observations:
+        out = Path(args.save_observations)
+        out.mkdir(parents=True, exist_ok=True)
+        for record in observations:
+            record.save(out / f"{record.subject_id}.json")
+        print(f"  {'gravados em' if pt else 'saved to'} {out}")
+
+    if args.unavailable:
+        # Named, not presented as global: most reasons hold for every node, but
+        # the upstream hop is particular to the node whose record this is.
+        sample = observations[0]
+        print(_header(
+            f"Evidencia indisponivel em {sample.subject_id}, com o motivo" if pt
+            else f"Unavailable evidence for {sample.subject_id}, with the reason"
+        ))
+        for variable, reason in sorted(sample.unavailable.items()):
+            print(f"  {variable:<24} {reason}")
+        print("  " + ("O salto a montante e por no; os demais motivos valem para todos."
+                      if pt else
+                      "The upstream hop is per node; the other reasons hold for every node."))
+
+    run = diagnose_run(args.results, topology)
+    print(_header("Incidentes" if pt else "Incidents"))
+    incidents = sorted(
+        run.board.entries(Level.INCIDENT, key="incident"),
+        key=lambda e: (-e.cf, e.subject),
+    )
+    if not incidents:
+        print("  nenhum" if pt else "  none")
+    for incident in incidents:
+        explains = incident.data.get("explains", [])
+        suffix = (f", {len(explains)} " + ("explicados" if pt else "explained")) if explains else ""
+        print(f"  {incident.subject:<9} {incident.value:<24} CF {incident.cf:+.2f}  "
+              f"{incident.data['kind']}{suffix}")
+        print(f"            {incident.rationale(args.lang)}")
+
+    if not args.fault_scenario:
+        return 0 if run.quiescent else 1
+
+    # The only place the commanded fault is read. The adapter never opens
+    # events.csv, and no expert is given the scenario.
+    commanded = build_scenario(args.fault_scenario, topology).commanded
+    score = score_against_commanded(run, commanded)
+    print(_header(
+        "Verdade comandada (so para avaliar; a telemetria nao a contem)" if pt
+        else "Commanded ground truth (scoring only; the telemetry does not carry it)"
+    ))
+    for node, diagnosis in score.commanded:
+        hit = (node, diagnosis) in score.hits
+        print(f"  {node:<9} {diagnosis:<24} "
+              + (("encontrado" if pt else "found") if hit
+                 else ("NAO encontrado" if pt else "NOT found")))
+    if score.spurious:
+        print(f"  {'incidentes sem falha comandada' if pt else 'incidents with no commanded fault'}: "
+              + ", ".join(f"{n}:{v}" for n, v in score.spurious))
+    return 0 if score.exact else 1
+
+
+# ---------------------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aisg",
@@ -803,6 +902,21 @@ def build_parser() -> argparse.ArgumentParser:
     ns.add_argument("--fault-scenario", choices=sorted(SCENARIOS),
                     help="inject a blackboard scenario's faults and its central failover plan")
     ns.set_defaults(func=cmd_ns3_export)
+
+    # ns-3 telemetry -> diagnosis
+    nd = sub.add_parser(
+        "ns3-diagnose",
+        help="diagnose from simulated telemetry / diagnosticar pela telemetria simulada",
+    )
+    nd.add_argument("--results", required=True, metavar="DIR",
+                    help="run directory holding nodes.csv (simulator flag --probe)")
+    nd.add_argument("--fault-scenario", choices=sorted(SCENARIOS),
+                    help="score the diagnosis against this scenario's commanded fault")
+    nd.add_argument("--save-observations", metavar="DIR",
+                    help="write one observation record per node, as JSON")
+    nd.add_argument("--unavailable", action="store_true",
+                    help="list the evidence the simulator cannot measure, and why")
+    nd.set_defaults(func=cmd_ns3_diagnose)
 
     # eco-resolution
     eco = sub.add_parser("eco", help="eco-resolution / eco-resolucao")

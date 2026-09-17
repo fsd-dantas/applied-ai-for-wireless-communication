@@ -36,8 +36,9 @@ The diagnosis vocabulary and current capabilities have one owner in `software/ai
 | Induzir `mac_contention` e `routing_misconfiguration` / Inducing them in the simulator | sem mecanismo em `FAULT_BY_DIAGNOSIS` hoje; exigiria um PHY/MAC com contenção no lugar da abstração ponto a ponto de 900 MHz / no mechanism today; would need a contention-capable PHY/MAC in place of the 900 MHz point-to-point abstraction |
 | Separar `rf_interference` de `excess_path_loss` no simulador / Separating them in the simulator | ambos são induzidos pelo mesmo `radio_per`, então uma execução não distingue o que as regras separam / both are induced by the same `radio_per`, so a run cannot distinguish what the rules separate |
 
-A exportação da telemetria simulada como registros de observação — o passo que fecha o ciclo diagnóstico → plano → verificação — está registrada acima, em [Simulador](#simulador--simulator-experiment-004).
-Exporting simulated telemetry as observation records — the step that closes the diagnosis → plan → verification loop — is recorded above, under [Simulador](#simulador--simulator-experiment-004).
+A telemetria simulada já volta como registro de observação: `aisg ns3-diagnose --results <dir>` lê o `nodes.csv` de uma execução com `--probe` e diagnostica pelo mesmo quadro-negro. Em `saf-chain-outage` a alcançabilidade medida sozinha nomeia `SAF_02` e explica os 17 nós a jusante. Falta estender aos outros dois cenários e aplicar as ações recomendadas dentro da própria execução.
+
+Simulated telemetry already returns as an observation record: `aisg ns3-diagnose --results <dir>` reads the `nodes.csv` of a `--probe` run and diagnoses through the same blackboard. On `saf-chain-outage`, measured reachability alone names `SAF_02` and explains the 17 nodes downstream. What remains is extending it to the other two scenarios and applying the recommended actions inside the run itself.
 
 ## Revisão de literatura / Literature review (`literature/`)
 

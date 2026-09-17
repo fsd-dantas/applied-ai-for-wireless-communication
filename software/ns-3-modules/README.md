@@ -146,6 +146,9 @@ A primeira linha impressa é / the first line printed is `aisg dual-homed backha
 | `--cpeGain` | sobrepõe o ganho da antena do CPE, em dBi / overrides the CPE antenna gain, in dBi |
 | `--earfcnDl`, `--earfcnUl` | sobrepõem os EARFCN do LTE / override the LTE EARFCNs |
 | `--animate` | grava o traço NetAnim / writes the NetAnim trace |
+| `--probe` | cada nó reporta um batimento ao NOC; grava `nodes.csv` (padrão: desligado, para que as execuções versionadas continuem idênticas) / every node reports a heartbeat to the NOC; writes `nodes.csv` (default off, so the versioned runs stay identical) |
+| `--probeInterval` | segundos entre batimentos (padrão 1) / seconds between heartbeats (default 1) |
+| `--probeStart`, `--probeStop` | janela de medição, em s (padrão 16 e 29) / measurement window, in s (default 16 and 29) |
 
 ## Saídas / Outputs
 
@@ -155,6 +158,7 @@ A primeira linha impressa é / the first line printed is `aisg dual-homed backha
 | `requests.csv` | por consulta SCADA: site, sequência, instante de envio, RTT / per SCADA poll: site, sequence, send time, RTT |
 | `events.csv` | falhas injetadas e trocas de meio, com instante e motivo / injected faults and medium switches, with time and reason |
 | `flowmon.xml` | FlowMonitor por fluxo / per-flow FlowMonitor |
+| `nodes.csv` | com `--probe`: alcançabilidade por nó na janela de medição — batimentos esperados e recebidos, perda, último instante visto, atraso de ida médio / with `--probe`: per-node reachability over the measurement window — heartbeats expected and received, loss, last time seen, mean one-way delay |
 | `animation.xml` | traço NetAnim, com `--animate` / NetAnim trace, with `--animate` |
 
 ## Limites / Limits

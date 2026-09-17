@@ -54,6 +54,8 @@ const Ipv4Address kNocService("10.255.0.1");
 const uint16_t kScadaPort = 5000;
 const uint16_t kTelemetryPort = 6000;
 const uint16_t kTelemetrySourcePort = 6001;
+const uint16_t kProbePort = 7000;
+const uint32_t kProbeBytes = 64;
 
 // ---------------------------------------------------------------------------
 // event log: faults and route switches, in the order they happen
@@ -795,6 +797,139 @@ class TelemetrySink
 };
 
 // ---------------------------------------------------------------------------
+// reachability probe: what a management system can actually measure
+// ---------------------------------------------------------------------------
+// Off by default, so every result committed before this existed stays
+// reproducible byte for byte.
+//
+// Why heartbeats and not polls from the NOC: the scenario gives a service
+// address only to the NOC and the edge routers, and installs host routes only
+// towards those. There is therefore no forward path from the NOC to a relay,
+// but every relay already has a route home, because that is how site traffic
+// returns. So each node reports upstream over a route that already exists - no
+// new address, route or scenario record.
+//
+// This is the evidence that separates a stopped relay from the nodes stranded
+// behind it. Both go silent; what differs is the upstream. The stopped relay's
+// own upstream still reports, while a stranded node's upstream is silent too.
+// Neither fact is the commanded label: both are arrival counts at the NOC.
+//
+// One-way by construction, since the NOC cannot reply. This measures arrival,
+// never round-trip time, and the exported column is named accordingly.
+struct ProbeRecord
+{
+    std::string node;
+    std::string role;
+    uint64_t expected{0};
+    uint64_t received{0};
+    double lastSeen{-1.0};
+    double owdSumMs{0.0};
+};
+
+class ProbeSink
+{
+  public:
+    ProbeSink(Ptr<Node> noc, double start, double interval)
+        : m_start(start),
+          m_interval(interval)
+    {
+        m_socket = Socket::CreateSocket(noc, UdpSocketFactory::GetTypeId());
+        m_socket->Bind(InetSocketAddress(kNocService, kProbePort));
+        m_socket->SetRecvCallback(MakeCallback(&ProbeSink::OnReceive, this));
+    }
+
+    uint32_t Register(const std::string& id, const std::string& role)
+    {
+        m_records.push_back(ProbeRecord{id, role, 0, 0, -1.0, 0.0});
+        return static_cast<uint32_t>(m_records.size() - 1);
+    }
+
+    // Counted when the heartbeat is scheduled, not when it is delivered: this is
+    // the number the NOC expects from the declared interval, which it knows even
+    // for a node that has stopped.
+    void CountExpected(uint32_t index)
+    {
+        ++m_records.at(index).expected;
+    }
+
+    const std::vector<ProbeRecord>& Records() const
+    {
+        return m_records;
+    }
+
+  private:
+    void OnReceive(Ptr<Socket> socket)
+    {
+        Ptr<Packet> packet;
+        while ((packet = socket->Recv()))
+        {
+            uint32_t tag = ReadSequence(packet);
+            uint32_t index = tag >> 16;
+            uint32_t sequence = tag & 0xFFFF;
+            if (index >= m_records.size())
+            {
+                continue;
+            }
+            ProbeRecord& record = m_records[index];
+            ++record.received;
+            double now = Simulator::Now().GetSeconds();
+            record.lastSeen = now;
+            // The send instant is deterministic from the schedule, so one-way
+            // delay needs no timestamp in the payload.
+            record.owdSumMs += (now - (m_start + sequence * m_interval)) * 1e3;
+        }
+    }
+
+    Ptr<Socket> m_socket;
+    double m_start;
+    double m_interval;
+    std::vector<ProbeRecord> m_records;
+};
+
+class NodeProbe
+{
+  public:
+    NodeProbe(Ptr<Node> host,
+              ProbeSink* sink,
+              uint32_t index,
+              double start,
+              double stop,
+              double interval)
+        : m_sink(sink),
+          m_index(index),
+          m_stop(stop),
+          m_interval(interval)
+    {
+        m_socket = Socket::CreateSocket(host, UdpSocketFactory::GetTypeId());
+        m_socket->Bind();
+        Simulator::Schedule(Seconds(start), &NodeProbe::Send, this);
+    }
+
+  private:
+    void Send()
+    {
+        if (Simulator::Now().GetSeconds() > m_stop)
+        {
+            return;
+        }
+        uint32_t tag = (m_index << 16) | (m_sequence & 0xFFFF);
+        m_socket->SendTo(MakePayload(tag, kProbeBytes),
+                         0,
+                         InetSocketAddress(kNocService, kProbePort));
+        m_sink->CountExpected(m_index);
+        ++m_sequence;
+        Simulator::Schedule(Seconds(m_interval), &NodeProbe::Send, this);
+    }
+
+    Ptr<Socket> m_socket;
+    ProbeSink* m_sink;
+    uint32_t m_index;
+    double m_stop;
+    double m_interval;
+    uint32_t m_sequence{0};
+};
+
+// ---------------------------------------------------------------------------
 // building blocks
 // ---------------------------------------------------------------------------
 struct Endpoint
@@ -842,6 +977,10 @@ main(int argc, char* argv[])
     bool animate = false;
     double cpeGainOverride = -999.0;
     std::string failover = "none";
+    bool probe = false;
+    double probeInterval = 1.0;
+    double probeStart = 16.0;
+    double probeStop = 29.0;
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("cpeGain", "override the CPE antenna boresight gain, in dBi", cpeGainOverride);
@@ -852,7 +991,14 @@ main(int argc, char* argv[])
     cmd.AddValue("earfcnDl", "override the LTE downlink EARFCN", earfcnDlOverride);
     cmd.AddValue("earfcnUl", "override the LTE uplink EARFCN", earfcnUlOverride);
     cmd.AddValue("animate", "write a NetAnim trace", animate);
+    cmd.AddValue("probe", "report per-node reachability to the NOC, into nodes.csv", probe);
+    cmd.AddValue("probeInterval", "seconds between node heartbeats", probeInterval);
+    cmd.AddValue("probeStart", "start of the measurement window, in s", probeStart);
+    cmd.AddValue("probeStop", "end of the measurement window, in s", probeStop);
     cmd.Parse(argc, argv);
+    NS_ABORT_MSG_IF(probe && probeInterval <= 0.0, "--probeInterval must be positive");
+    NS_ABORT_MSG_IF(probe && probeStop <= probeStart,
+                    "--probeStop must be later than --probeStart");
     NS_ABORT_MSG_IF(scenarioPath.empty(), "--scenario is required");
     NS_ABORT_MSG_IF(failover != "none" && failover != "local" && failover != "central",
                     "--failover must be none, local or central");
@@ -1238,6 +1384,30 @@ main(int argc, char* argv[])
         sink.Register(traffic.back().get());
     }
 
+    // --- reachability probe, opt-in ------------------------------------------
+    // eNodeBs carry no IP stack in this model and the NOC is the observer, so
+    // neither reports. Everything else that routes does.
+    std::unique_ptr<ProbeSink> probeSink;
+    std::vector<std::unique_ptr<NodeProbe>> probes;
+    if (probe)
+    {
+        probeSink = std::make_unique<ProbeSink>(noc, probeStart, probeInterval);
+        for (const auto& spec : scenario.nodes)
+        {
+            if (spec.role == "noc" || spec.role == "enb")
+            {
+                continue;
+            }
+            uint32_t index = probeSink->Register(spec.id, spec.role);
+            probes.push_back(std::make_unique<NodeProbe>(node(spec.id),
+                                                         probeSink.get(),
+                                                         index,
+                                                         probeStart,
+                                                         probeStop,
+                                                         probeInterval));
+        }
+    }
+
     FlowMonitorHelper flowHelper;
     Ptr<FlowMonitor> monitor = flowHelper.InstallAll();
 
@@ -1313,6 +1483,32 @@ main(int argc, char* argv[])
         std::cout << "event " << event.time << " s  " << event.subject << "  " << event.what
                   << "  " << event.detail << '\n';
     }
+    if (probeSink)
+    {
+        std::ofstream nodesCsv(outDir + "/nodes.csv");
+        nodesCsv << "node,role,window_start_s,window_end_s,heartbeats_expected,"
+                    "heartbeats_received,loss_pct,last_seen_s,owd_mean_ms\n";
+        for (const auto& record : probeSink->Records())
+        {
+            double loss =
+                record.expected
+                    ? 100.0 * (record.expected - record.received) / record.expected
+                    : 0.0;
+            double owd = record.received ? record.owdSumMs / record.received : 0.0;
+            nodesCsv << record.node << ',' << record.role << ',' << probeStart << ','
+                     << probeStop << ',' << record.expected << ',' << record.received << ','
+                     << std::fixed << std::setprecision(2) << loss << ',';
+            if (record.lastSeen >= 0.0)
+            {
+                nodesCsv << record.lastSeen;
+            }
+            nodesCsv << ',' << owd << '\n';
+            nodesCsv.unsetf(std::ios::fixed);
+        }
+        NS_LOG_UNCOND("probe: " << probeSink->Records().size() << " nodes reported over "
+                                << probeStart << "-" << probeStop << " s");
+    }
+
     Simulator::Destroy();
     return 0;
 }

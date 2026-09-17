@@ -137,6 +137,7 @@ software/ns-3-modules/dual-homed-backhaul/build/dual-homed-backhaul \
 | `sites.csv` | meio primário, pedidos SCADA enviados/recebidos, perda (%), RTT médio e máximo, telemetria enviada/recebida / primary medium, SCADA requests sent/received, loss (%), mean and max RTT, telemetry sent/received |
 | `requests.csv` | RTT por consulta SCADA individual / RTT per individual SCADA poll |
 | `events.csv` | instante e motivo de cada falha injetada e troca de meio / time and reason of every injected fault and medium switch |
+| `nodes.csv` | com `--probe`: por nó, batimentos esperados e recebidos no NOC na janela de medição, perda, último instante visto e atraso de ida médio / with `--probe`: per node, heartbeats expected and received at the NOC in the measurement window, loss, last time seen, mean one-way delay |
 | `flowmon.xml` | estatísticas de FlowMonitor por fluxo / per-flow FlowMonitor statistics |
 
 Perda é definida como consultas SCADA enviadas na janela de medição (16–29 s) sem resposta em 2 s; sete consultas por site nessa janela, logo uma consulta perdida vale 14,3%. / Loss is defined as SCADA polls sent in the measurement window (16–29 s) with no reply within 2 s; seven polls per site in that window, so one lost poll is 14.3%.
@@ -163,7 +164,9 @@ Falha aos 10 s. Arquivos em [`results/`](results/). / Fault at 10 s. Files under
 - Uma execução determinística por caso; sem sementes múltiplas nem intervalos de confiança. / One deterministic run per case; no multiple seeds or confidence intervals.
 - Sete consultas por site na janela de medição: uma consulta perdida vale 14,3%. / Seven polls per site in the measurement window: one lost poll is 14.3%.
 - Congestionamento modelado como inundação UDP de 20 Mbps por CPE; interferência como taxa de erro de pacote de 0,6 nos enlaces de RM_07. / Congestion modelled as a 20 Mbps UDP flood per CPE; interference as a 0.6 packet error rate on RM_07's links.
-- O ciclo diagnóstico → plano → verificação ainda não fecha: a telemetria simulada ainda não é exportada de volta como registro de observação para o quadro-negro. / The diagnosis → plan → verification loop does not close yet: simulated telemetry is not yet exported back as an observation record for the blackboard.
+- O ciclo fecha hoje apenas para `saf-chain-outage`; os outros dois cenários ainda não têm execução com `--probe` versionada. / The loop closes today only for `saf-chain-outage`; the other two scenarios have no versioned `--probe` run yet.
+- A única evidência medida por nó é alcançabilidade. Potência, relação sinal-ruído, retransmissão de MAC e presença de rota continuam **indisponíveis** — declaradas como tal em cada registro, com o motivo. Basta para separar parada de nó de queda de repetidor a montante; não basta para os diagnósticos de rádio. / The only per-node evidence measured is reachability. Received power, SNR, MAC retry and route presence remain **unavailable** — declared as such in every record, with the reason. Enough to separate a node failure from an upstream relay failure; not enough for the radio diagnoses.
+- Os batimentos são de mão única: o cenário não instala rota do NOC para um repetidor, então não há ida e volta a medir e `rtt_ms` fica indisponível. O atraso de ida é exportado como `owd_mean_ms`, e deliberadamente **não** é usado como RTT. / Heartbeats are one-way: the scenario installs no route from the NOC to a relay, so there is no round trip to time and `rtt_ms` stays unavailable. One-way delay is exported as `owd_mean_ms` and deliberately **not** reused as RTT.
 
 ## Estado de reprodutibilidade / Reproducibility status
 
@@ -176,7 +179,7 @@ Longer runs with multiple seeds do not exist yet — see [Limitations](#limitaç
 
 ## Próximas etapas / Next steps
 
-Exportar a telemetria simulada como registros de observação para o quadro-negro, fechando o ciclo diagnóstico → plano → verificação; execuções mais longas com várias sementes. / Export simulated telemetry as observation records for the blackboard, closing the diagnosis → plan → verification loop; longer runs with several seeds.
+Estender a telemetria aos outros dois cenários de falha; aplicar as ações que o diagnóstico recomenda e medir o resultado na mesma execução; execuções mais longas com várias sementes. / Extend the telemetry to the other two fault scenarios; apply the actions the diagnosis recommends and measure the outcome in the same run; longer runs with several seeds.
 
 ## Material de manuscrito relacionado / Related manuscript material
 
