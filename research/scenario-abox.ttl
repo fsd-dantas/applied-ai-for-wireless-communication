@@ -1,0 +1,83 @@
+@prefix : <https://example.org/backhaul-ai#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# GENERATED FILE - do not hand-edit. Produced by research/export_abox.py
+# from a live run of the blackboard (002) and eco-resolution (003) engines
+# on scenario 'saf-chain-outage', plus the committed ns-3 results (004) for the
+# same scenario under central failover. Regenerate with:
+#   PYTHONPATH=software python research/export_abox.py
+
+:SAF_02 a :SafRelay .
+:ER_06 a :EdgeRouter .
+
+# Layer 1 - expert system diagnosis (live run, experiment 001/002 engine)
+:cf_diag_SAF_02 a :CertaintyFactor ; :hasNumericValue "0.8"^^xsd:decimal .
+:diag_SAF_02 a :NodeFailure ;
+    :hasCertaintyFactor :cf_diag_SAF_02 ;
+    rdfs:comment "concluded by rule S16: The node was stopped in the scenario." .
+
+# Layer 2 - blackboard correlation and plan (live run, experiment 002)
+:cf_incident_SAF_02 a :CertaintyFactor ; :hasNumericValue "0.96575"^^xsd:decimal .
+:incident_SAF_02 a :Incident ;
+    :correlates :diag_SAF_02 ;
+    :hasCommonCause :SAF_02 ;
+    :hasCertaintyFactor :cf_incident_SAF_02 ;
+    rdfs:comment "correlator explains 16 downstream nodes from one common cause" .
+
+:act_SAF_02_0_request_authorization a :Action ;
+    :proposedBy :rec_SAF_02 ;
+    :hasCost "1.0"^^xsd:decimal ;
+    rdfs:comment "request_authorization(SAF_02)" .
+:act_SAF_02_1_restart_node a :Action ;
+    :proposedBy :rec_SAF_02 ;
+    :hasCost "1.0"^^xsd:decimal ;
+    rdfs:comment "restart_node(SAF_02)" .
+:act_SAF_02_2_verify_link a :Action ;
+    :proposedBy :rec_SAF_02 ;
+    :hasCost "1.0"^^xsd:decimal ;
+    rdfs:comment "verify_link(SAF_02)" .
+:act_SAF_02_3_record_logbook a :Action ;
+    :proposedBy :rec_SAF_02 ;
+    :hasCost "1.0"^^xsd:decimal ;
+    rdfs:comment "record_logbook(SAF_02)" .
+:act_SAF_02_4_close_work_order a :Action ;
+    :proposedBy :rec_SAF_02 ;
+    :hasCost "1.0"^^xsd:decimal ;
+    rdfs:comment "close_work_order(SAF_02)" .
+
+:rec_SAF_02 a :RecommendedAction .
+:plan_SAF_02 a :Plan ;
+    :derivedFrom :diag_SAF_02 ;
+    :consistsOf :act_SAF_02_0_request_authorization , :act_SAF_02_1_restart_node , :act_SAF_02_2_verify_link , :act_SAF_02_3_record_logbook , :act_SAF_02_4_close_work_order ;
+    rdfs:comment "real cost 5.0, valid=True, explains 16 nodes" .
+
+# Layer 2 knowledge sources active for this site (live run)
+:ks_router a :RouterKS ; :reads :L3 ; :writes :L4 ;
+    rdfs:comment "route = restored, cf=1.0" .
+:ks_arbiter a :ArbiterKS ; :reads :L4 ; :writes :L4 ;
+    rdfs:comment "decision = switch_medium, cf=1.0" .
+
+# Layer 2' - eco-resolution alternative for the same incident (live run, experiment 003)
+:agent_ER_06_scada a :FlowAgent ;
+    :representsTraffic :Scada ;
+    :hasPriority "2"^^xsd:integer ;
+    rdfs:comment "ends on medium plte" .
+:agent_ER_06_telemetry a :FlowAgent ;
+    :representsTraffic :Telemetry ;
+    :hasPriority "1"^^xsd:integer ;
+    rdfs:comment "satisfied=False after 2 rounds; unsatisfied=['ER_06/telemetry', 'ER_07/telemetry']" .
+
+# Layer 3 - real ns-3 simulation output (experiment 004, committed results, central failover)
+:fault_SAF_02 a :Fault ;
+    :occursAt :SAF_02 ;
+    :occursAtTime "10"^^xsd:decimal ;
+    rdfs:comment "node_down" .
+    # note what is absent: no triple above (:diag_SAF_02, :incident_SAF_02, :plan_SAF_02,
+    # :ks_router, :ks_arbiter) references :fault_SAF_02 - the Fault/readBy axiom holds by construction.
+
+:result_ER_06 a :SiteResult ;
+    :hasLossPercent "14.29"^^xsd:decimal ;
+    :hasRttMean "45.51"^^xsd:decimal ;
+    :scoredAgainst :diag_SAF_02 , :plan_SAF_02 ;
+    rdfs:comment "switch at t=13s: radio900 -> plte (central: blackboard plan)" .

@@ -1,0 +1,285 @@
+@prefix : <https://example.org/backhaul-ai#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Executable companion to ontology.md. The two must be read together: this file
+# is the OWL 2 / Turtle serialisation of the same TBox and RBox that
+# ontology.md presents in DL notation with Manchester-syntax excerpts for the
+# five key axioms. The worked-example ABox lives separately, in
+# research/scenario-abox.ttl, generated from a real run - see that file's own
+# header. Checked with rdflib (valid syntax) and owlready2 + the HermiT
+# reasoner (logically consistent, both alone and merged with the real ABox) -
+# see ontology.md's Validation section.
+<https://example.org/backhaul-ai> a owl:Ontology ;
+    rdfs:label "Backhaul restoration domain ontology"@en ;
+    rdfs:comment "Shared vocabulary for experiments 001-004 of applied-ai-for-wireless-communication: reasoning primitives (layer 1), coordination (layer 2, blackboard vs. eco-resolution), and simulation-grounded verification (layer 3)."@en .
+
+#################################################################
+# Shared domain: Node, Link, Site, Medium, Topology
+#################################################################
+
+:NetworkElement a owl:Class .
+
+:Node a owl:Class ; rdfs:subClassOf :NetworkElement .
+:ControlCentre a owl:Class ; rdfs:subClassOf :Node .
+:LteEnb a owl:Class ; rdfs:subClassOf :Node .
+:LteRelay a owl:Class ; rdfs:subClassOf :Node .
+:SafRelay a owl:Class ; rdfs:subClassOf :Node .
+:EdgeRouter a owl:Class ; rdfs:subClassOf :Node .
+:Cpe a owl:Class ; rdfs:subClassOf :Node .
+:RemoteRadio a owl:Class ; rdfs:subClassOf :Node .
+
+[] a owl:AllDisjointClasses ;
+   owl:members ( :ControlCentre :LteEnb :LteRelay :SafRelay :EdgeRouter :Cpe :RemoteRadio ) .
+
+:Link a owl:Class ; rdfs:subClassOf :NetworkElement .
+:FibreLink a owl:Class ; rdfs:subClassOf :Link .
+:EthernetLink a owl:Class ; rdfs:subClassOf :Link .
+:LteLink a owl:Class ; rdfs:subClassOf :Link .
+:Radio900Link a owl:Class ; rdfs:subClassOf :Link .
+:Radio900SafLink a owl:Class ; rdfs:subClassOf :Link .
+
+[] a owl:AllDisjointClasses ;
+   owl:members ( :FibreLink :EthernetLink :LteLink :Radio900Link :Radio900SafLink ) .
+
+:connects a owl:ObjectProperty ; rdfs:domain :Link ; rdfs:range :Node .
+:hasQuality a owl:DatatypeProperty ; rdfs:domain :Link ; rdfs:range xsd:decimal .
+:hasCostFunction a owl:DatatypeProperty ; rdfs:domain :Link ; rdfs:range xsd:string .
+
+:Medium a owl:Class .
+:PrivateLte a :Medium .
+:Radio900 a :Medium .
+:Medium owl:equivalentClass [
+    a owl:Class ;
+    owl:oneOf ( :PrivateLte :Radio900 )
+] .
+
+:Traffic a owl:Class .
+:carries a owl:ObjectProperty ; rdfs:domain :Node ; rdfs:range :Traffic .
+
+:hasComponent a owl:ObjectProperty ; rdfs:domain :Site ; rdfs:range :Node .
+
+:Site a owl:Class ;
+    owl:equivalentClass [
+        a owl:Class ;
+        owl:intersectionOf (
+            [ a owl:Restriction ; owl:onProperty :hasComponent ; owl:someValuesFrom :EdgeRouter ]
+            [ a owl:Restriction ; owl:onProperty :hasComponent ; owl:someValuesFrom :Cpe ]
+            [ a owl:Restriction ; owl:onProperty :hasComponent ; owl:someValuesFrom :RemoteRadio ]
+        )
+    ] .
+
+# Key axiom 2 (ontology.md #2): a site's edge router is a stub — a route may
+# start or end there, but the node never carries traffic that is not its own.
+:EdgeRouter rdfs:subClassOf [
+    a owl:Class ;
+    owl:complementOf [
+        a owl:Restriction ; owl:onProperty :carries ; owl:someValuesFrom :Traffic
+    ]
+] .
+
+:Topology a owl:Class .
+:hasNode a owl:ObjectProperty ; rdfs:domain :Topology ; rdfs:range :Node .
+:hasLink a owl:ObjectProperty ; rdfs:domain :Topology ; rdfs:range :Link .
+
+#################################################################
+# Layer 1 - Reasoning (experiment 001): diagnosis, planning, routing
+#################################################################
+
+:Observation a owl:Class .
+:hasValue a owl:DatatypeProperty ; rdfs:domain :Observation ; rdfs:range xsd:string .
+:observedAt a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Observation ; rdfs:range :Node .
+
+:Conclusion a owl:Class .
+:CertaintyFactor a owl:Class .
+:hasNumericValue a owl:DatatypeProperty ; a owl:FunctionalProperty ;
+    rdfs:domain :CertaintyFactor ; rdfs:range xsd:decimal .
+:hasCertaintyFactor a owl:ObjectProperty ; a owl:FunctionalProperty ;
+    rdfs:domain :Conclusion ; rdfs:range :CertaintyFactor .
+
+:Symptom a owl:Class ; rdfs:subClassOf :Conclusion .
+:Diagnosis a owl:Class ; rdfs:subClassOf :Conclusion .
+:RecommendedAction a owl:Class ; rdfs:subClassOf :Conclusion .
+:AuthorizationRequirement a owl:Class ; rdfs:subClassOf :Conclusion .
+
+[] a owl:AllDisjointClasses ;
+   owl:members ( :Symptom :Diagnosis :RecommendedAction :AuthorizationRequirement ) .
+
+# The 8 diagnosis kinds are disjoint subclasses of Diagnosis, matching how the
+# worked example below actually types individuals (":diag_ER06 a :NodeFailure"),
+# not an owl:oneOf enumeration of the class itself.
+:Congestion a owl:Class ; rdfs:subClassOf :Diagnosis .
+:ExcessPathLoss a owl:Class ; rdfs:subClassOf :Diagnosis .
+:Healthy a owl:Class ; rdfs:subClassOf :Diagnosis .
+:MacContention a owl:Class ; rdfs:subClassOf :Diagnosis .
+:NodeFailure a owl:Class ; rdfs:subClassOf :Diagnosis .
+:RfInterference a owl:Class ; rdfs:subClassOf :Diagnosis .
+:RoutingMisconfiguration a owl:Class ; rdfs:subClassOf :Diagnosis .
+:UpstreamRelayFailure a owl:Class ; rdfs:subClassOf :Diagnosis .
+
+[] a owl:AllDisjointClasses ;
+   owl:members ( :Congestion :ExcessPathLoss :Healthy :MacContention :NodeFailure
+                 :RfInterference :RoutingMisconfiguration :UpstreamRelayFailure ) .
+
+:Predicate a owl:Class .
+
+:Rule a owl:Class .
+:belongsToLayer a owl:DatatypeProperty ; a owl:FunctionalProperty ; rdfs:domain :Rule ; rdfs:range xsd:string .
+:hasPremise a owl:ObjectProperty ; rdfs:domain :Rule ; rdfs:range :Predicate .
+:concludes a owl:ObjectProperty ; rdfs:domain :Rule ; rdfs:range :Conclusion .
+:hasRuleCertaintyFactor a owl:DatatypeProperty ; a owl:FunctionalProperty ;
+    rdfs:domain :Rule ; rdfs:range xsd:decimal .
+
+:Action a owl:Class .
+:hasPrecondition a owl:ObjectProperty ; rdfs:domain :Action ; rdfs:range :Predicate .
+:hasAddList a owl:ObjectProperty ; rdfs:domain :Action ; rdfs:range :Predicate .
+:hasDeleteList a owl:ObjectProperty ; rdfs:domain :Action ; rdfs:range :Predicate .
+:hasCost a owl:DatatypeProperty ; a owl:FunctionalProperty ; rdfs:domain :Action ; rdfs:range xsd:decimal .
+:proposedBy a owl:ObjectProperty ; rdfs:domain :Action ; rdfs:range :RecommendedAction .
+
+# Key axiom 5 (ontology.md #5): every action a plan can use traces back to a
+# layer-4 conclusion. Modelling idealisation - see ontology.md's annotation.
+:Action rdfs:subClassOf [
+    a owl:Restriction ; owl:onProperty :proposedBy ; owl:someValuesFrom :RecommendedAction
+] .
+
+:Goal a owl:Class .
+:requires a owl:ObjectProperty ; rdfs:domain :Goal ; rdfs:range :Predicate .
+
+:Plan a owl:Class .
+:consistsOf a owl:ObjectProperty .                        # domain: Plan or Route (see below)
+:achieves a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Plan ; rdfs:range :Goal .
+:derivedFrom a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Plan ; rdfs:range :Diagnosis .
+
+:Route a owl:Class .
+:hasOrigin a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Route ; rdfs:range :Node .
+:hasDestination a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Route ; rdfs:range :Node .
+:hasRouteCost a owl:DatatypeProperty ; a owl:FunctionalProperty ; rdfs:domain :Route ; rdfs:range xsd:decimal .
+
+#################################################################
+# Layer 2 - Coordination (experiments 002, 003)
+#################################################################
+
+:Actor a owl:Class .
+:Controller a owl:Class .
+:scheduledBy a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Actor ; rdfs:range :Controller .
+
+:KnowledgeSource a owl:Class ; rdfs:subClassOf :Actor .
+:Agent a owl:Class ; rdfs:subClassOf :Actor .
+
+# Key axiom 3 (ontology.md #3): the KnowledgeSource/Agent split is the exact
+# formal boundary between experiment 002 (blackboard) and experiment 003
+# (eco-resolution) - a disjoint class pair, not a naming choice.
+:KnowledgeSource owl:disjointWith :Agent .
+
+:calls a owl:ObjectProperty ; rdfs:domain :KnowledgeSource ; rdfs:range :KnowledgeSource .
+:reads a owl:ObjectProperty ; rdfs:domain :KnowledgeSource ; rdfs:range :BlackboardLevel .
+:writes a owl:ObjectProperty ; rdfs:domain :KnowledgeSource ; rdfs:range :BlackboardLevel .
+
+:KnowledgeSource rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty :scheduledBy ; owl:someValuesFrom :Controller ] ,
+    [ a owl:Restriction ; owl:onProperty :reads ; owl:someValuesFrom :BlackboardLevel ] ,
+    [ a owl:Restriction ; owl:onProperty :writes ; owl:someValuesFrom :BlackboardLevel ] ,
+    [ a owl:Class ; owl:complementOf
+        [ a owl:Restriction ; owl:onProperty :calls ; owl:someValuesFrom :KnowledgeSource ] ] .
+
+# Independence: a KnowledgeSource never calls another one directly (Hearsay-II).
+:builtFrom a owl:ObjectProperty ; rdfs:domain :KnowledgeSource ; rdfs:range :Rule .
+:RuleKnowledgeSource a owl:Class ; rdfs:subClassOf :KnowledgeSource ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :builtFrom ; owl:someValuesFrom :Rule ] .
+:CorrelatorKS a owl:Class ; rdfs:subClassOf :KnowledgeSource .
+:RouterKS a owl:Class ; rdfs:subClassOf :KnowledgeSource .
+:ArbiterKS a owl:Class ; rdfs:subClassOf :KnowledgeSource .
+:PlannerKS a owl:Class ; rdfs:subClassOf :KnowledgeSource .
+
+[] a owl:AllDisjointClasses ;
+   owl:members ( :RuleKnowledgeSource :CorrelatorKS :RouterKS :ArbiterKS :PlannerKS ) .
+
+:BlackboardLevel a owl:Class .
+:L0 a :BlackboardLevel . :L1 a :BlackboardLevel . :L2 a :BlackboardLevel .
+:L3 a :BlackboardLevel . :L4 a :BlackboardLevel . :L5 a :BlackboardLevel .
+:BlackboardLevel owl:equivalentClass [ a owl:Class ; owl:oneOf ( :L0 :L1 :L2 :L3 :L4 :L5 ) ] .
+
+:hasGoal a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Agent ; rdfs:range :Goal .
+:occupies a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Agent ; rdfs:range :Place .
+:performs a owl:ObjectProperty ; rdfs:domain :Agent ; rdfs:range :Behaviour .
+
+# Autonomy: the exact negation of KnowledgeSource's :scheduledBy restriction.
+:Agent rdfs:subClassOf [
+    a owl:Class ;
+    owl:complementOf
+        [ a owl:Restriction ; owl:onProperty :scheduledBy ; owl:someValuesFrom :Controller ]
+] .
+
+:Behaviour a owl:Class .
+:Satisfaction a :Behaviour . :Aggression a :Behaviour .
+:Flight a :Behaviour . :Dependency a :Behaviour .
+:Behaviour owl:equivalentClass [ a owl:Class ; owl:oneOf ( :Satisfaction :Aggression :Flight :Dependency ) ] .
+
+:FlowAgent a owl:Class ; rdfs:subClassOf :Agent .
+:hasPriority a owl:DatatypeProperty ; a owl:FunctionalProperty ; rdfs:domain :FlowAgent ; rdfs:range xsd:integer .
+:TrafficKind a owl:Class .
+:Scada a :TrafficKind . :Telemetry a :TrafficKind .
+:representsTraffic a owl:ObjectProperty ; a owl:FunctionalProperty ;
+    rdfs:domain :FlowAgent ; rdfs:range :TrafficKind .
+
+:Place a owl:Class .
+:occupiesMedium a owl:ObjectProperty ; rdfs:domain :Place ; rdfs:range :Medium .
+:atSite a owl:ObjectProperty ; rdfs:domain :Place ; rdfs:range :Site .
+:Place owl:equivalentClass [
+    a owl:Class ;
+    owl:intersectionOf (
+        [ a owl:Restriction ; owl:onProperty :occupiesMedium ; owl:someValuesFrom :Medium ]
+        [ a owl:Restriction ; owl:onProperty :atSite ; owl:someValuesFrom :Site ]
+    )
+] .
+
+:Incident a owl:Class .
+:correlates a owl:ObjectProperty ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    rdfs:domain :Incident ; rdfs:range :Diagnosis .
+:hasCommonCause a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Incident ; rdfs:range :Node .
+
+#################################################################
+# Layer 3 - Verification (experiment 004)
+#################################################################
+
+:Scenario a owl:Class .
+:overTopology a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Scenario ; rdfs:range :Topology .
+:commandsFault a owl:ObjectProperty ; rdfs:domain :Scenario ; rdfs:range :Fault .
+
+:Fault a owl:Class .
+:occursAt a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Fault ; rdfs:range :Node .
+:occursAtTime a owl:DatatypeProperty ; a owl:FunctionalProperty ; rdfs:domain :Fault ; rdfs:range xsd:decimal .
+:readBy a owl:ObjectProperty ; rdfs:domain :Fault ; rdfs:range :Actor .
+
+# Key axiom 4 (ontology.md #4): the epistemic boundary. No Actor - no
+# KnowledgeSource, no Agent - may read a Fault; it exists only to score
+# the outcome (methodology.md: "commanded ground truth is for scoring only").
+:Fault rdfs:subClassOf [
+    a owl:Class ;
+    owl:complementOf [ a owl:Restriction ; owl:onProperty :readBy ; owl:someValuesFrom :Actor ]
+] .
+
+:Simulation a owl:Class .
+:executes a owl:ObjectProperty ; a owl:FunctionalProperty ; rdfs:domain :Simulation ; rdfs:range :Scenario .
+:produces a owl:ObjectProperty ; rdfs:domain :Simulation ; rdfs:range :SiteResult .
+
+:SiteResult a owl:Class .
+:hasLossPercent a owl:DatatypeProperty ; a owl:FunctionalProperty ; rdfs:domain :SiteResult ; rdfs:range xsd:decimal .
+:hasRttMean a owl:DatatypeProperty ; a owl:FunctionalProperty ; rdfs:domain :SiteResult ; rdfs:range xsd:decimal .
+:scoredAgainst a owl:ObjectProperty ; rdfs:domain :SiteResult .
+# range: Diagnosis or Incident or Plan
+:scoredAgainst rdfs:range [ a owl:Class ; owl:unionOf ( :Diagnosis :Incident :Plan ) ] .
+
+#################################################################
+# ABox - worked example
+#
+# The worked example used to live here, hand-authored. It has been replaced
+# by a real one: research/scenario-abox.ttl, generated by
+# research/export_abox.py from a live run of the blackboard (002) and
+# eco-resolution (003) engines on scenario 'saf-chain-outage', plus the
+# committed ns-3 results (004) for the same scenario. Load both files
+# together; do not hand-edit scenario-abox.ttl, regenerate it instead.
+#################################################################
