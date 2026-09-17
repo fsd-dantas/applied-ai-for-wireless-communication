@@ -209,6 +209,43 @@ def test_astar_never_expands_more_nodes_than_uniform_cost(any_topology):
     assert astar_total <= ucs_total
 
 
+@pytest.mark.parametrize(
+    "name,expected_astar,expected_ucs,expected_saving_pct",
+    [
+        ("simulated", 10310, 13920, 25.9),
+        ("dual", 99963, 109740, 8.9),
+    ],
+)
+def test_aggregate_astar_saving_over_every_ordered_pair(
+    name, expected_astar, expected_ucs, expected_saving_pct
+):
+    """
+    The efficiency figure the docs quote - 25.9% on `simulated`, 8.9% on `dual` - was,
+    until now, measured by an ad-hoc script and never recomputed by anything committed.
+    This is that script, turned into a pinned regression guard: if it fails, either the
+    topology data changed or A*/uniform-cost's behaviour did, and astar.md, the 001
+    README and the 04-astar figure all need to be re-measured and updated together, not
+    just this test.
+
+    Ordered pairs (permutations), not combinations: A*'s expansion count for (A, B) need
+    not equal (B, A), since the heuristic depends on the goal, even though the optimal
+    cost does not. That is also why this totals roughly twice the work of
+    test_astar_never_expands_more_nodes_than_uniform_cost above, and is kept separate
+    from it rather than folded in.
+    """
+    topology = load_topology(name)
+    astar_total = ucs_total = 0
+    for source, goal in itertools.permutations(sorted(topology.nodes), 2):
+        problem = RoutingProblem(topology, source, goal)
+        astar_total += astar(problem, problem.heuristic()).expanded
+        ucs_total += uniform_cost(problem).expanded
+
+    assert astar_total == expected_astar
+    assert ucs_total == expected_ucs
+    saving_pct = 100.0 * (ucs_total - astar_total) / ucs_total
+    assert saving_pct == pytest.approx(expected_saving_pct, abs=0.05)
+
+
 def test_reported_cost_equals_the_recomputed_path_cost(topology):
     problem = RoutingProblem(topology, "NOC", "ER_03")
     result = astar(problem, problem.heuristic())

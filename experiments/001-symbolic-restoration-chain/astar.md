@@ -159,7 +159,7 @@ Uma hipotese, declarada como hipotese e **nao medida**: o cenario `dual` e uma e
 
 O que **esta** garantido, e testado, e a direcao: `test_astar_never_expands_more_nodes_than_uniform_cost` verifica que o total do A* nunca supera o do custo uniforme, em ambos os cenarios. Uma heuristica consistente so pode ajudar; quanto ela ajuda depende do grafo.
 
-**Como reproduzir, e o que ainda falta.** Os dois percentuais acima somam `expanded` do A* e do custo uniforme sobre todos os pares ordenados de cada cenario. Nenhum comando da CLI faz essa soma: `aisg --topology simulated route --compare` compara **um unico par**, nao o agregado. O teste citado verifica a desigualdade, nao o percentual. Enquanto nao existir um script ou teste que recalcule esses dois numeros, eles sao um resultado **declarado, nao reproduzivel por comando** deste repositorio.
+**Como reproduzir.** Os dois percentuais acima somam `expanded` do A* e do custo uniforme sobre todos os pares ordenados de cada cenario. O comando `aisg --topology simulated route --compare` nao serve para isso — ele compara **um unico par**, nao o agregado. A soma agora esta fixada como teste de regressao, `test_aggregate_astar_saving_over_every_ordered_pair` em [`software/tests/test_search.py`](../../software/tests/test_search.py): ele recalcula os dois totais e a economia a cada `pytest`, e falha se a topologia ou o comportamento do A*/custo uniforme mudarem sem que este documento seja atualizado junto.
 
 ### Heuristicas aprendidas: onde o aprendizado de maquina entraria
 
@@ -286,6 +286,8 @@ Summed over every ordered pair: **25.9%** fewer expansions than uniform cost on 
 A hypothesis, stated as a hypothesis and *not* measured: `dual` is a private-LTE star with many stub sites, where straight-line distance predicts transport cost poorly because the cheap medium is a long LTE hop and the expensive one is a short radio hop. Confirming it would mean measuring the correlation between `h(n)` and `h*(n)` per scenario, which has not been done.
 
 What *is* guaranteed and tested is the direction: `test_astar_never_expands_more_nodes_than_uniform_cost` checks that A*'s total never exceeds uniform cost's, in both scenarios. A consistent heuristic can only help; how much it helps depends on the graph.
+
+**How to reproduce it.** `aisg --topology simulated route --compare` will not reproduce the two percentages above — it compares a **single pair**, not the aggregate. The sum is now pinned as a regression test, `test_aggregate_astar_saving_over_every_ordered_pair` in [`software/tests/test_search.py`](../../software/tests/test_search.py): it recomputes both totals and the saving on every `pytest` run, and fails if the topology or A*/uniform-cost's behaviour changes without this document being updated to match.
 
 ### Failures and re-routing
 
