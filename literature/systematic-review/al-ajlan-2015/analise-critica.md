@@ -33,7 +33,7 @@ Os 8 casos de diagnóstico da base simulada. No progressivo, os 13 fatos são fo
 
 ## Configuração
 
-`measure_chaining.py` executa os 8 casos nos dois modos sem alterar os limiares (`THRESHOLDS`) do experimento 001; a resolução de conflito é sempre a primeira regra aplicável, como no artigo original.
+`measure_chaining.py` executa os 8 casos nos dois modos sem alterar os limiares (`SIM_THRESHOLDS`) do experimento 001; a resolução de conflito é sempre a primeira regra aplicável, como no artigo original.
 
 ## Dados de entrada
 

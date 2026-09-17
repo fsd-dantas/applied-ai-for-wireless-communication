@@ -5,12 +5,15 @@ Folders are created when they receive content; this roadmap records what is plan
 
 ## Experimentos / Experiments
 
+A rede simulada vem primeiro: é a linha de base sobre a qual os outros três operam. A numeração segue a ordem de construção.
+The simulated network comes first: it is the baseline the other three run on. The numbering follows the order they were built in.
+
 | # | Experimento / Experiment | Estado / Status |
 |---|---|---|
+| 004 | Simulação multi-RAT em ns-3 (LTE privativo + 900 MHz) com injeção de falhas e verificação / Multi-RAT ns-3 simulation (private LTE + 900 MHz) with fault injection and verification | concluído no modelo / complete on the model |
 | 001 | Encadeamento simbólico diagnóstico → plano → rota / Symbolic diagnosis → plan → route chain | concluído / complete |
 | 002 | Sistema multiespecialista com quadro-negro / Multi-expert blackboard | concluído / complete |
 | 003 | Eco-resolução: agentes reativos em conflito por recursos da rede multi-RAT / Eco-resolution: reactive agents in conflict over multi-RAT network resources | concluído no modelo / complete on the model |
-| 004 | Simulação multi-RAT em ns-3 (LTE privativo + 900 MHz) com injeção de falhas e verificação / Multi-RAT ns-3 simulation (private LTE + 900 MHz) with fault injection and verification | concluído no modelo / complete on the model |
 
 ## Simulador / Simulator (experiment 004)
 

@@ -28,12 +28,16 @@ Problema, subquestões e metodologia / problem, sub-questions and methodology: [
 
 ## Experimentos / Experiments
 
+A rede simulada vem primeiro: é a linha de base sobre a qual os outros três experimentos operam — a mesma topologia, os mesmos cenários de falha, o mesmo tráfego. A numeração segue a ordem em que foram construídos, não a ordem de leitura.
+
+The simulated network comes first: it is the baseline the other three experiments run on — the same topology, the same fault scenarios, the same traffic. The numbering follows the order they were built in, not the order to read them in.
+
 | # | Experimento / Experiment | Métodos / Methods | Estado / Status |
 |---|---|---|---|
+| 004 | [Simulação multi-RAT em ns-3 / Multi-RAT ns-3 simulation](experiments/004-multi-rat-simulation/) | LTE privativo, 900 MHz, injeção de falhas / Private LTE, 900 MHz, fault injection | concluído no modelo / complete on the model |
 | 001 | [Encadeamento simbólico de restauração / Symbolic restoration chain](experiments/001-symbolic-restoration-chain/) | Regras de produção com fatores de certeza, STRIPS e GPS, A\* / Production rules with certainty factors, STRIPS and GPS, A\* | concluído / complete |
 | 002 | [Quadro-negro multiespecialista / Multi-expert blackboard](experiments/002-multi-expert-blackboard/) | Arquitetura blackboard, correlação de incidentes, failover multi-RAT / Blackboard architecture, incident correlation, multi-RAT failover | concluído / complete |
 | 003 | [Eco-resolução / Eco-resolution](experiments/003-eco-resolution/) | Agentes reativos: satisfação, agressão, fuga, dependência / Reactive agents: satisfaction, aggression, flight, dependency | concluído no modelo / complete on the model |
-| 004 | [Simulação multi-RAT em ns-3 / Multi-RAT ns-3 simulation](experiments/004-multi-rat-simulation/) | LTE privativo, 900 MHz, injeção de falhas / Private LTE, 900 MHz, fault injection | concluído no modelo / complete on the model |
 
 ## Organização / Layout
 
