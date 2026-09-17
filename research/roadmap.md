@@ -25,6 +25,24 @@ Folders are created when they receive content; this roadmap records what is plan
 | Failover | local no roteador de borda e central no centro de operação / local at the edge router and central at the operations centre |
 | Verificação / Verification | execução de resolução e animação / resolution run and animation |
 
+## Conformidade e verificação / Conformance and verification
+
+O vocabulário de diagnósticos tem um único dono (`INDUCIBLE_BY`, na base de conhecimento), mas cada consumidor — planejador, quadro-negro, eco-resolução, exportador ns-3 — mantém a sua própria cópia. Os itens abaixo transformam essa coerência, hoje mantida à mão, em verificação automática.
+
+The diagnosis vocabulary has a single owner (`INDUCIBLE_BY`, in the knowledge base), yet every consumer — planner, blackboard, eco-resolution, ns-3 exporter — keeps its own copy. The items below turn that coherence, today maintained by hand, into an automated check.
+
+| Item | Descrição / Description |
+|---|---|
+| Teste de conformidade do vocabulário / Vocabulary conformance test | garantir que `DIAGNOSIS_TO_FAULT`, `FAULT_BY_DIAGNOSIS` e as partições dos experimentos 002 e 003 cobrem `INDUCIBLE_BY`, com isenções declaradas (`healthy` nunca é comandado) / assert that `DIAGNOSIS_TO_FAULT`, `FAULT_BY_DIAGNOSIS` and the 002/003 partitions cover `INDUCIBLE_BY`, with declared exemptions (`healthy` is never commanded) |
+| Induzir `mac_contention` e `routing_misconfiguration` / Inducing them in the simulator | sem mecanismo em `FAULT_BY_DIAGNOSIS` hoje; exigiria um PHY/MAC com contenção no lugar da abstração ponto a ponto de 900 MHz / no mechanism today; would need a contention-capable PHY/MAC in place of the 900 MHz point-to-point abstraction |
+| Separar `rf_interference` de `excess_path_loss` no simulador / Separating them in the simulator | ambos são induzidos pelo mesmo `radio_per`, então uma execução não distingue o que as regras separam / both are induced by the same `radio_per`, so a run cannot distinguish what the rules separate |
+| Classificar `routing_misconfiguration` em 002 e 003 / Classifying it in 002 and 003 | não aparece em nenhuma partição, então um nó assim continua utilizável como trânsito na rota A\* / it appears in no partition, so such a node stays usable as A\* transit |
+| Estatística agregada do A\* / Aggregate A\* statistic | script ou teste que recalcule os nós expandidos sobre todos os pares ordenados dos dois cenários; os valores atuais (25,9% em 30 nós, 8,9% em 60) não são reproduzíveis por nenhum comando do repositório / a script or test recomputing expansions over every ordered pair in both scenarios; today's figures (25.9% at 30 nodes, 8.9% at 60) are reproducible by no command here |
+| NetAnim: posições e cores / positions and colours | posicionar os nós do EPC, que hoje ficam na origem sem modelo de mobilidade, e colorir os nós por papel / position the EPC nodes, which today sit at the origin with no mobility model, and colour nodes by role |
+
+A exportação da telemetria simulada como registros de observação — o passo que fecha o ciclo diagnóstico → plano → verificação — está registrada acima, em [Simulador](#simulador--simulator-experiment-004).
+Exporting simulated telemetry as observation records — the step that closes the diagnosis → plan → verification loop — is recorded above, under [Simulador](#simulador--simulator-experiment-004).
+
 ## Revisão de literatura / Literature review (`literature/`)
 
 `literature/systematic-review/` guarda uma pasta por artigo revisado; hoje contém apenas `al-ajlan-2015/`. Os demais arquivos abaixo entram quando tiverem conteúdo real.

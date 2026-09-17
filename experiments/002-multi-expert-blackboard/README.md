@@ -95,9 +95,9 @@ Same core as experiment 001: Python 3.10+, no third-party dependencies; `pytest`
 
 ## Configuração / Configuration
 
-`CORRELATOR_PARAMETERS` (em [`software/aisg/blackboard/`](../../software/aisg/blackboard/)) são nominais e não otimizados: a decisão de agrupar por parcimônia é uma preferência declarada, não uma prova de que é a única explicação correta. Os limiares de regra são os mesmos `THRESHOLDS` do experimento 001, compartilhados sem cópia.
+`CORRELATOR_PARAMETERS` (em [`software/aisg/blackboard/`](../../software/aisg/blackboard/)) são nominais e não otimizados: a decisão de agrupar por parcimônia é uma preferência declarada, não uma prova de que é a única explicação correta. Os limiares de regra são os mesmos `SIM_THRESHOLDS` do experimento 001, compartilhados sem cópia.
 
-`CORRELATOR_PARAMETERS` (in [`software/aisg/blackboard/`](../../software/aisg/blackboard/)) are nominal and unoptimised: grouping by parsimony is a declared preference, not proof it is the only correct explanation. Rule thresholds are experiment 001's same `THRESHOLDS`, shared without copying.
+`CORRELATOR_PARAMETERS` (in [`software/aisg/blackboard/`](../../software/aisg/blackboard/)) are nominal and unoptimised: grouping by parsimony is a declared preference, not proof it is the only correct explanation. Rule thresholds are experiment 001's same `SIM_THRESHOLDS`, shared without copying.
 
 ## Dados de entrada / Input data
 

@@ -89,7 +89,7 @@ disparar).
 
 ### 5. O modelo de custo
 
-Os custos são **nominais e não calibrados**, exatamente como o bloco `THRESHOLDS`
+Os custos são **nominais e não calibrados**, exatamente como o bloco `SIM_THRESHOLDS`
 da base de conhecimento. Declaram uma ordem de grandeza relativa, não uma medição:
 
 ```
@@ -142,16 +142,20 @@ do domínio que escrevemos à mão.
 Quatro perguntas, todas asseguradas em `tests/test_planning_graph.py`:
 
 **a) Operadores mortos.** Um operador que não aparece em nenhum nível de ação
-nunca pode disparar. Resultado: `dispatch_crew` e `realign_antenna` estão mortos em
-todo problema simulado — nada estabelece `crew-at` numa execução de simulador. São
-inofensivos para a correção, mas o grafo os aponta sem que seja preciso ler a lista
-de operadores.
+nunca pode disparar. Resultado: num problema com uma única falha diagnosticada, os
+reparos das **outras** falhas estão mortos — com `mac-contention`, são seis
+(`change_channel`, `fix_routing`, `reroute_traffic`, `restart_node`,
+`restore_path_budget`, `restore_relay`). O número cai para cinco com duas falhas e
+para **zero** com as sete. Não é defeito: é o grafo dizendo que um reparo sem a sua
+falha nunca pode disparar, sem que seja preciso ler a lista de operadores.
+Verificado em `test_repairs_for_absent_faults_are_dead_operators`.
 
 **b) Pontos de escolha.** Quais proposições têm mais de um operador que as produz?
 Resultado: **nenhuma**, nos dois cenários. Essa é a explicação *estrutural* de um
-resultado empírico incômodo: comparando as **55 combinações de falhas** solúveis, o
-GPS devolve exatamente o mesmo custo que o A\* em todas. A análise meios-fins nunca
-perde aqui porque **não tem escolha para errar**.
+resultado empírico incômodo: comparando as **63 combinações solúveis de até três
+falhas**, o GPS devolve exatamente o mesmo custo que o A\* em todas — o número que
+`test_gps_matches_a_star_on_every_solvable_fault_combination` afirma. A análise
+meios-fins nunca perde aqui porque **não tem escolha para errar**.
 
 > Consequência honesta para a apresentação: a não-otimalidade do GPS é uma
 > propriedade real, demonstrada em `test_gps_can_be_suboptimal_...`, mas em um
@@ -189,7 +193,7 @@ Floyd–Warshall cumpre para o A\* na topologia.
   plano mais barato de 3. Não pode substituir o planejador A\* progressivo, e
   nenhuma função aqui tenta.
 - **O Graphplan clássico é proposicional.** Os operadores são aterrados sobre os
-  objetos antes da análise. Com um nó e 18 operadores isso é trivial; não seria
+  objetos antes da análise. Com um nó e 13 operadores isso é trivial; não seria
   para os 30 nós simultaneamente.
 - **Os custos não são calibrados.** Nenhuma medição de laboratório os sustenta.
 - **O domínio ainda é raso.** Zero pontos de escolha significa que ele não exercita
@@ -277,7 +281,7 @@ never fire).
 ### 5. The cost model
 
 Costs are **nominal and uncalibrated**, exactly like the knowledge base's
-`THRESHOLDS` block. They declare a relative order of magnitude, not a
+`SIM_THRESHOLDS` block. They declare a relative order of magnitude, not a
 measurement:
 
 ```
@@ -330,15 +334,19 @@ for the domain we wrote by hand.
 Four questions, all asserted in `tests/test_planning_graph.py`:
 
 **a) Dead operators.** An operator appearing in no action level can never fire.
-Result: `dispatch_crew` and `realign_antenna` are dead in every simulated
-problem — nothing establishes `crew-at` in a simulator run. They are harmless
-for correctness, but the graph points at them without anyone reading the
-operator list.
+Result: in a problem with a single diagnosed fault, the repairs for the **other**
+faults are dead — with `mac-contention`, six of them (`change_channel`,
+`fix_routing`, `reroute_traffic`, `restart_node`, `restore_path_budget`,
+`restore_relay`). That drops to five with two faults and to **zero** with all
+seven. It is not a defect: it is the graph saying that a repair without its fault
+can never fire, without anyone reading the operator list. Asserted in
+`test_repairs_for_absent_faults_are_dead_operators`.
 
 **b) Choice points.** Which propositions have more than one operator producing
 them? Result: **none**, in either scenario. That is the *structural* explanation
-for an uncomfortable empirical result: comparing the **55 solvable fault
-combinations**, GPS returns exactly the same cost as A\* in every one.
+for an uncomfortable empirical result: comparing the **63 solvable combinations
+of up to three faults**, GPS returns exactly the same cost as A\* in every one —
+the count `test_gps_matches_a_star_on_every_solvable_fault_combination` asserts.
 Means-ends analysis never loses here because it **has no choice to get wrong**.
 
 > The honest consequence for the presentation: GPS non-optimality is a real
@@ -376,7 +384,7 @@ either planner** — the same role Floyd–Warshall plays for A\* on the topolog
   cheaper 3-level one. It cannot replace the A\* progression planner, and no
   function here tries.
 - **Classic Graphplan is propositional.** Operators are grounded over the
-  objects before analysis. With one node and 18 operators that is trivial; it
+  objects before analysis. With one node and 13 operators that is trivial; it
   would not be over all 30 nodes at once.
 - **The costs are uncalibrated.** No laboratory measurement supports them.
 - **The domain is still shallow.** Zero choice points means it does not exercise

@@ -79,7 +79,7 @@
   <text x="518" y="636" font-size="11.5" fill="#e6edf3" font-family="Consolas, SFMono-Regular, Menlo, monospace">A* :  remote_fix (3)               =  cost  3</text>
   <text x="518" y="660" font-size="11" fill="#ffa07a">Isolated in a constructed test problem where the goal has TWO</text>
   <text x="518" y="676" font-size="11" fill="#ffa07a">achievers. In the restoration domain every literal has exactly ONE,</text>
-  <text x="518" y="692" font-size="11" fill="#ffa07a" font-weight="600">so GPS matches A* on all 55 solvable fault combinations.</text>
+  <text x="518" y="692" font-size="11" fill="#ffa07a" font-weight="600">so GPS matches A* on all 63 solvable combinations of up to three faults.</text>
   <rect x="820" y="126" width="260" height="120" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.0"/>
   <text x="836" y="148" font-size="12.5" fill="#e6edf3" font-weight="700">WHY COST MATTERS</text>
   <text x="836" y="168" font-size="11.5" fill="#9daab7">If every action cost 1,</text>
