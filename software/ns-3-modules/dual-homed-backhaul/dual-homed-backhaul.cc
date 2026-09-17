@@ -33,6 +33,7 @@
 #include "ns3/virtual-net-device.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -1243,11 +1244,43 @@ main(int argc, char* argv[])
     std::unique_ptr<AnimationInterface> animation;
     if (animate)
     {
+        // PointToPointEpcHelper creates the SGW, PGW and MME itself, so they are
+        // absent from the scenario file and never receive a position: NetAnim warns
+        // about them and stacks them on the NOC at the origin. The declared topology
+        // spans x 0..25000, so negative x keeps them clear of every real node. This
+        // has to run before the AnimationInterface exists.
+        double epcY = 2400.0;
+        for (auto it = NodeList::Begin(); it != NodeList::End(); ++it)
+        {
+            if ((*it)->GetObject<MobilityModel>() == nullptr)
+            {
+                AnimationInterface::SetConstantPosition(*it, -3000.0, epcY);
+                epcY -= 2400.0;
+            }
+        }
+
+        // The palette the repository's own figures use, so both agree on colour.
+        const std::map<std::string, std::array<uint8_t, 3>> colours = {
+            {"noc", {{27, 58, 107}}},   {"enb", {{63, 124, 172}}},
+            {"cpe", {{193, 102, 107}}}, {"rm", {{107, 143, 113}}},
+            {"saf", {{212, 163, 115}}}, {"er", {{178, 58, 72}}},
+        };
+
         animation = std::make_unique<AnimationInterface>(outDir + "/animation.xml");
         animation->SetMaxPktsPerTraceFile(500000);
         for (const auto& spec : scenario.nodes)
         {
             animation->UpdateNodeDescription(nodes[spec.id], spec.id);
+            // Nodes are kilometres apart; NetAnim's default size is invisible here.
+            animation->UpdateNodeSize(nodes[spec.id], 400.0, 400.0);
+            auto colour = colours.find(spec.role);
+            if (colour != colours.end())
+            {
+                animation->UpdateNodeColor(nodes[spec.id],
+                                           colour->second[0],
+                                           colour->second[1],
+                                           colour->second[2]);
+            }
         }
     }
 
