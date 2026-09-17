@@ -52,6 +52,12 @@ No expert calls another: all read and write the board, and the controller picks 
 - Toda conclusão carrega sua justificativa (regras, suporte, autor). / Every conclusion carries its justification (rules, support, author).
 - Modelo de domínio sintético: ver [domain-model.md](domain-model.md). / Synthetic domain model: see [domain-model.md](domain-model.md).
 
+## Capacidades e lacunas / Capabilities and gaps
+
+[Matriz de capacidades](capability-matrix.md): o que cada experimento precisa observar e executar, contra o que o simulador realmente oferece. Hoje: 4 das 13 observações por nó são medidas ou derivadas, e das sete intervenções do planejador **nenhuma** tem operação correspondente no simulador — a planta executa apenas `failover`.
+
+[Capability matrix](capability-matrix.md): what each experiment needs to observe and to execute, against what the simulator actually provides. Today: 4 of the 13 per-node observations are measured or derived, and of the planner's seven interventions **none** has a matching simulator operation — the plant executes only `failover`.
+
 ## Contrato compartilhado / Shared contract
 
 [Diagnosis contract](diagnosis-contract.md): `domain/diagnoses.py` owns diagnosis identifiers, repair literals, routing and eco effects, and explicit simulator capabilities. Existing component mappings are derived from this registry. / O registro central define diagnósticos e capacidades; as tabelas dos componentes são derivadas dele.
