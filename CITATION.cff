@@ -8,6 +8,7 @@ type: software
 authors:
   - family-names: Dantas
     given-names: Fernando Sabino
+    email: fernando@sdantas.com.br
 repository-code: https://github.com/fsd-dantas/applied-ai-for-wireless-communication
 license: MIT
 version: 0.11.0

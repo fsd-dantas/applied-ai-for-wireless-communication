@@ -9,7 +9,7 @@ description = "Research knowledge base and research framework for applying artif
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Fernando Sabino Dantas" }]
+authors = [{ name = "Fernando Sabino Dantas", email = "fernando@sdantas.com.br" }]
 keywords = ["artificial-intelligence", "expert-system", "strips", "planning", "a-star", "blackboard", "multi-rat", "smart-grid"]
 classifiers = [
     "Programming Language :: Python :: 3",
