@@ -76,9 +76,9 @@ make check
 aisg blackboard --scenario dual-outage --experts
 ```
 
-Mais em / more in [docs/getting-started.md](docs/getting-started.md).
+Mais informação em / further information in [docs/getting-started.md](docs/getting-started.md).
 
-Simulação em ns-3, instalação do zero / ns-3 simulation, setup from scratch: [software/ns-3-modules/README.md](software/ns-3-modules/README.md).
+O pacote `aisg` pode ser instalado em qualquer sistema operacional, entretanto a simulação em ns-3, [software/ns-3-modules/README.md](software/ns-3-modules/README.md), requer Linux (Ubuntu nativo ou WSL2 no Windows). / The package `aisg` can be installed in any OS, however ns-3 simulation described in experiment 004 requires Linux (native Ubuntu or WSL2 on Windows).
 
 ## Dados e configurações abertos / Open data and configurations
 

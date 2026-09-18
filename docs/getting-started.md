@@ -40,7 +40,7 @@ aisg eco --problem network --scenario saf-chain-outage --trace
 aisg ns3-export --out dual-homed-60.scn
 ```
 
-Para instalar o ns-3 do zero e executar o cenário, ver / to install ns-3 from scratch and run the scenario, see [software/ns-3-modules/README.md](../software/ns-3-modules/README.md).
+`ns3-export` roda em qualquer SO, mas compilar e executar o cenário no ns-3 **requer Linux** (Ubuntu nativo ou WSL2 no Windows) — ver / `ns3-export` runs on any OS, but building and running the scenario in ns-3 **requires Linux** (native Ubuntu or WSL2 on Windows) — see [software/ns-3-modules/README.md](../software/ns-3-modules/README.md).
 
 Em inglês / in English: `aisg --lang en ...`
 
